@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Jobs", "SFA.DAS.AAN.Hub.Jobs\SFA.DAS.AAN.Hub.Jobs.csproj", "{4E84F7E5-A815-4D11-BC36-1D21B9988366}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Data", "SFA.DAS.AAN.Hub.Data\SFA.DAS.AAN.Hub.Data.csproj", "{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E84F7E5-A815-4D11-BC36-1D21B9988366}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E84F7E5-A815-4D11-BC36-1D21B9988366}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E84F7E5-A815-4D11-BC36-1D21B9988366}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E84F7E5-A815-4D11-BC36-1D21B9988366}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {44DEF13B-4DFC-4EF1-A33E-8F090697EBCC}
+	EndGlobalSection
+EndGlobal
