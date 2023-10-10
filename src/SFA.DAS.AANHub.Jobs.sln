@@ -3,9 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Jobs", "SFA.DAS.AAN.Hub.Jobs\SFA.DAS.AAN.Hub.Jobs.csproj", "{4E84F7E5-A815-4D11-BC36-1D21B9988366}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.AAN.Hub.Jobs", "SFA.DAS.AAN.Hub.Jobs\SFA.DAS.AAN.Hub.Jobs.csproj", "{4E84F7E5-A815-4D11-BC36-1D21B9988366}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Data", "SFA.DAS.AAN.Hub.Data\SFA.DAS.AAN.Hub.Data.csproj", "{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.AAN.Hub.Data", "SFA.DAS.AAN.Hub.Data\SFA.DAS.AAN.Hub.Data.csproj", "{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{DCE3D45B-F3A0-42A1-89E1-88E2DAE64B68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Jobs.UnitTests", "SFA.DAS.AAN.Hub.Jobs.UnitTests\SFA.DAS.AAN.Hub.Jobs.UnitTests.csproj", "{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,16 @@ Global
 		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73A62402-4BF2-489C-A77A-FB1FF8E69AB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A} = {DCE3D45B-F3A0-42A1-89E1-88E2DAE64B68}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {44DEF13B-4DFC-4EF1-A33E-8F090697EBCC}

@@ -1,12 +1,14 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using SFA.DAS.AAN.Hub.Data;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
+using SFA.DAS.AAN.Hub.Jobs.Services;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class AddApplicationRegistrationsExtension
 {
-    public static void AddApplicationRegistrations(IServiceCollection services)
+    public static void AddApplicationRegistrations(this IServiceCollection services)
     {
-        services.AddTransient<IAanDataContext, AanDataContext>();
+        services.AddTransient<INotificationService, NotificationService>();
     }
 }

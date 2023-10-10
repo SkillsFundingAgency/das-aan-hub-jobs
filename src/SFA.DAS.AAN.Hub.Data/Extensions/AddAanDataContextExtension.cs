@@ -1,13 +1,14 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SFA.DAS.AAN.Hub.Data;
+using SFA.DAS.AAN.Hub.Data.Repositories;
 
-namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
+namespace SFA.DAS.AAN.Hub.Data.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class AddAanDataContextExtension
 {
     private static readonly string AzureResource = "https://database.windows.net/";
@@ -43,7 +44,8 @@ public static class AddAanDataContextExtension
                 o => o.CommandTimeout((int)TimeSpan.FromMinutes(5).TotalSeconds));
         });
 
-        services.AddTransient<IAanDataContext, AanDataContext>(provider => provider.GetService<AanDataContext>()!);
+        services.AddScoped<IAanDataContext, AanDataContext>(provider => provider.GetService<AanDataContext>()!);
+        services.AddScoped<INotificationsRepository, NotificationsRepository>();
         return services;
     }
 }
