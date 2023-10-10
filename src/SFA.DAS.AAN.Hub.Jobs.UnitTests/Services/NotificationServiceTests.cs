@@ -24,7 +24,7 @@ public class NotificationServiceTests
 
         await sut.ProcessNotificationBatch();
 
-        repoMock.Verify(c => c.GetPendingNotifications(applicationConfiguration.NotificationBatchSize));
+        repoMock.Verify(c => c.GetPendingNotifications(applicationConfiguration.Notifications.BatchSize));
     }
 
     [Test, MoqAutoData]
@@ -36,11 +36,11 @@ public class NotificationServiceTests
         NotificationService sut)
     {
         configMock.SetupGet(c => c.Value).Returns(applicationConfiguration);
-        repoMock.Setup(r => r.GetPendingNotifications(applicationConfiguration.NotificationBatchSize)).ReturnsAsync(notifications);
+        repoMock.Setup(r => r.GetPendingNotifications(applicationConfiguration.Notifications.BatchSize)).ReturnsAsync(notifications);
 
         var actual = await sut.ProcessNotificationBatch();
 
-        repoMock.Verify(c => c.GetPendingNotifications(applicationConfiguration.NotificationBatchSize));
+        repoMock.Verify(c => c.GetPendingNotifications(applicationConfiguration.Notifications.BatchSize));
         actual.Should().Be(notifications.Count);
     }
 }

@@ -25,7 +25,7 @@ public class NotificationService : INotificationService
     {
         var applicationConfiguration = _applicationConfigurationOptions.Value;
 
-        var pendingNotification = await _notificationRepository.GetPendingNotifications(applicationConfiguration.NotificationBatchSize);
+        var pendingNotification = await _notificationRepository.GetPendingNotifications(applicationConfiguration.Notifications.BatchSize);
 
         return pendingNotification.Count;
     }

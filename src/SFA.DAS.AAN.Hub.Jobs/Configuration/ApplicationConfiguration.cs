@@ -2,6 +2,7 @@
 
 public class ApplicationConfiguration
 {
-    public string ProcessNotificationSchedule { get; set; }
-    public int NotificationBatchSize { get; set; }
+    public string ApprenticeAanRouteUrl { get; set; }
+    public string EmployerAanRouteUrl { get; set; }
+    public NotificationsConfiguration Notifications { get; set; }
 }
