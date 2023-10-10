@@ -8,10 +8,10 @@ using SFA.DAS.AAN.Hub.Jobs.Models;
 
 namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Models;
 
+public record TestTokens(string Name, string Id);
+
 public class SendEmailCommandTests
 {
-    public record TestTokens(string Name, string Id);
-
     private TestTokens _testTokens = null!;
     private Notification _notification = null!;
     private SendEmailCommand _sut = null!;
