@@ -22,10 +22,12 @@ internal class NotificationsRepository : INotificationsRepository
     public async Task<List<Notification>> GetPendingNotifications(int batchSize)
     {
         var query = _context
-       .Notifications
-       .Where(n => n.SentTime == null && (n.SendAfterTime == null || n.SendAfterTime <= DateTime.UtcNow))
-       .OrderByDescending(n => n.IsSystem)
-       .Take(batchSize);
+           .Notifications
+           .Where(n => n.SentTime == null && (n.SendAfterTime == null || n.SendAfterTime <= DateTime.UtcNow))
+           .OrderByDescending(n => n.IsSystem)
+           .Take(batchSize)
+           .Include(n => n.Member);
+
         return await query.ToListAsync();
     }
 }

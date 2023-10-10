@@ -11,4 +11,6 @@ public class Notification
     public DateTime? SentTime { get; set; }
     public bool IsSystem { get; set; }
     public string? ReferenceId { get; set; }
+
+    public Member Member { get; set; } = null!;
 }
