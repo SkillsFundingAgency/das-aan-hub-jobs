@@ -10,13 +10,13 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Functions;
 public class SendNotificationsFunctionTests
 {
     [Test, MoqAutoData]
-    public async Task Run_InvokesService(TimerInfo timerInfo)
+    public async Task Run_InvokesService(TimerInfo timerInfo, CancellationToken cancellationToken)
     {
         Mock<INotificationService> serviceMock = new();
         SendNotificationsFunction sut = new(serviceMock.Object);
 
-        await sut.Run(timerInfo, Mock.Of<ILogger>());
+        await sut.Run(timerInfo, Mock.Of<ILogger>(), cancellationToken);
 
-        serviceMock.Verify(s => s.ProcessNotificationBatch());
+        serviceMock.Verify(s => s.ProcessNotificationBatch(cancellationToken));
     }
 }

@@ -3,6 +3,7 @@ using AutoFixture;
 using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework.Internal;
+using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Repositories;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
@@ -18,6 +19,8 @@ public class NotificationServiceTests
     private Mock<INotificationsRepository> _repositoryMock = null!;
     private Mock<IOptions<ApplicationConfiguration>> _optionsMock = null!;
     private Mock<IMessagingService> _messagingServiceMock = null!;
+    private Mock<IAanDataContext> _contextMock = null!;
+    private CancellationToken _cancellationToken;
     private ApplicationConfiguration _applicationConfiguration = null!;
     private NotificationService _sut = null!;
     private List<Notification> _notifications = new();
@@ -25,7 +28,10 @@ public class NotificationServiceTests
     [SetUp]
     public async Task Init()
     {
+        _contextMock = new();
+
         Fixture fixture = new();
+        _cancellationToken = fixture.Create<CancellationToken>();
 
         _applicationConfiguration = fixture.Create<ApplicationConfiguration>();
         _optionsMock = new Mock<IOptions<ApplicationConfiguration>>();
@@ -42,9 +48,9 @@ public class NotificationServiceTests
 
         _messagingServiceMock = new Mock<IMessagingService>();
 
-        _sut = new(_repositoryMock.Object, _optionsMock.Object, _messagingServiceMock.Object);
+        _sut = new(_repositoryMock.Object, _optionsMock.Object, _messagingServiceMock.Object, _contextMock.Object);
 
-        await _sut.ProcessNotificationBatch();
+        await _sut.ProcessNotificationBatch(_cancellationToken);
     }
 
     [Test]
@@ -54,4 +60,8 @@ public class NotificationServiceTests
     [Test]
     public void ThenSendsMessageForEachNotification() =>
         _messagingServiceMock.Verify(m => m.SendMessage(It.IsAny<SendEmailCommand>()), Times.Exactly(_notifications.Count));
+
+    [Test]
+    public void ThenUpdatesAllTheNotifications() => _contextMock.Verify(c => c.SaveChangesAsync(_cancellationToken));
+
 }
