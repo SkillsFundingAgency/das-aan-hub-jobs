@@ -28,6 +28,7 @@ public class Startup : FunctionsStartup
         builder.Services.AddOptions();
         builder.Services.AddAanDataContext(sqlConnectionString, environmentName);
         builder.Services.AddApplicationRegistrations();
+        builder.AddNServiceBus();
 
         builder.Services.Configure<ApplicationConfiguration>(configuration.GetSection(nameof(ApplicationConfiguration)));
     }

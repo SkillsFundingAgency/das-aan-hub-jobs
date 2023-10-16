@@ -1,51 +1,47 @@
-﻿using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using NServiceBus;
+using SFA.DAS.AAN.Hub.Jobs.Configuration;
+using SFA.DAS.Notifications.Messages.Commands;
+using SFA.DAS.NServiceBus.Extensions;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
-internal class AddNServiceBusExtension
+
+[ExcludeFromCodeCoverage]
+internal static class AddNServiceBusExtension
 {
-    private void ConfigureNServiceBus(IFunctionsHostBuilder builder)
+    public const string NotificationsQueue = "SFA.DAS.Notifications.MessageHandlers";
+    public const string EndpointName = "SFA.DAS.AAN.Hub.Jobs";
+    public static IFunctionsHostBuilder AddNServiceBus(this IFunctionsHostBuilder builder)
     {
-        //var logger = LoggerFactory.Create(b => b.ConfigureLogging()).CreateLogger<Startup>();
+        var configuration = builder.GetContext().Configuration;
 
-        //builder.UseNServiceBus((IConfiguration appConfiguration) =>
-        //{
-        //    var configuration = new ServiceBusTriggeredEndpointConfiguration(EndpointName);
-        //    var connectionStringConfiguration = ServiceBusConnectionConfiguration.GetServiceBusConnectionString(appConfiguration);
+        NServiceBusConfiguration nServiceBusConfiguration = new();
+        configuration.GetSection(nameof(NServiceBusConfiguration)).Bind(nServiceBusConfiguration);
 
-        //    if (connectionStringConfiguration.ConnectionType == ServiceBusConnectionConfiguration.ConnectionAuthenticationType.ManagedIdentity)
-        //    {
-        //        configuration.Transport.ConnectionString(connectionStringConfiguration.ConnectionString);
-        //        configuration.Transport.CustomTokenCredential(new DefaultAzureCredential());
-        //    }
-        //    else
-        //    {
-        //        //Shared Access Key, Will pick up the AzureServiceJobsServiceBus Setting by Default.
-        //    }
+        var endpointConfiguration = new EndpointConfiguration(EndpointName);
+        endpointConfiguration.EnableInstallers();
+        endpointConfiguration.UseMessageConventions();
+        endpointConfiguration.UseNewtonsoftJsonSerializer();
+        endpointConfiguration.License(nServiceBusConfiguration.NServiceBusLicense);
+        endpointConfiguration.SendOnly();
 
-        //    var nServiceBusConfig = appConfiguration.GetSection("NServiceBusConfiguration").Get<NServiceBusConfiguration>();
-        //    if (!string.IsNullOrWhiteSpace(nServiceBusConfig.License))
-        //    {
-        //        configuration.AdvancedConfiguration.License(nServiceBusConfig.License);
-        //    }
+        var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+        transport.AddRouting(routeSettings =>
+        {
+            routeSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsQueue);
+        });
+        var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
+        transport.ConnectionString(connectionString);
 
-        //    configuration.AdvancedConfiguration.SendFailedMessagesTo($"{EndpointName}-error");
-        //    configuration.LogDiagnostics();
+        var endpointInstance = Endpoint.Start(endpointConfiguration).GetAwaiter().GetResult();
 
-        //    configuration.AdvancedConfiguration.Conventions()
-        //        .DefiningMessagesAs(IsMessage)
-        //        .DefiningEventsAs(IsEvent)
-        //        .DefiningCommandsAs(IsCommand);
+        builder.Services
+            .AddSingleton(p => endpointInstance)
+            .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
 
-        //    configuration.Transport.SubscriptionRuleNamingConvention(AzureQueueNameShortener.Shorten);
-
-        //    configuration.AdvancedConfiguration.Pipeline.Register(new LogIncomingBehaviour(), nameof(LogIncomingBehaviour));
-        //    configuration.AdvancedConfiguration.Pipeline.Register(new LogOutgoingBehaviour(), nameof(LogOutgoingBehaviour));
-
-        //    var persistence = configuration.AdvancedConfiguration.UsePersistence<AzureTablePersistence>();
-        //    persistence.ConnectionString(appConfiguration.GetConnectionStringOrSetting("AzureWebJobsStorage"));
-        //    configuration.AdvancedConfiguration.EnableInstallers();
-
-        //    return configuration;
-        //});
+        return builder;
     }
 }

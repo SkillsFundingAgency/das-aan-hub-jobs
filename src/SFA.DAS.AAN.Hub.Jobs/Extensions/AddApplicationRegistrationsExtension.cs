@@ -10,6 +10,5 @@ public static class AddApplicationRegistrationsExtension
     public static void AddApplicationRegistrations(this IServiceCollection services)
     {
         services.AddTransient<INotificationService, NotificationService>();
-        services.AddTransient<IMessagingService, MessagingService>();
     }
 }

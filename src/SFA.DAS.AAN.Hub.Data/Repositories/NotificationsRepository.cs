@@ -25,6 +25,7 @@ internal class NotificationsRepository : INotificationsRepository
            .Notifications
            .Where(n => n.SentTime == null && (n.SendAfterTime == null || n.SendAfterTime <= DateTime.UtcNow))
            .OrderByDescending(n => n.IsSystem)
+           .ThenBy(n => n.SendAfterTime)
            .Take(batchSize)
            .Include(n => n.Member);
 
