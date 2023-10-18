@@ -21,7 +21,7 @@ public interface INotificationService
 public class NotificationService : INotificationService
 {
     public const string UserTypeApprentice = "Apprentice";
-    public const string LinkTokenKey = "Link";
+    public const string LinkTokenKey = "links";
 
     private readonly INotificationsRepository _notificationRepository;
     private readonly IOptions<ApplicationConfiguration> _applicationConfigurationOptions;
