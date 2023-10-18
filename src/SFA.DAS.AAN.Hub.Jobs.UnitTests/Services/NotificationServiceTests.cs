@@ -78,7 +78,7 @@ public class NotificationServiceTests
 
         var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
 
-        var uri = notification.Member.UserType == NotificationService.UserTypeApprentice ? _applicationConfiguration.ApprenticeAanRouteUrl : _applicationConfiguration.EmployerAanRouteUrl;
+        var uri = notification.Member.UserType == NotificationService.UserTypeApprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl;
 
         _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.Tokens[NotificationService.LinkTokenKey].Contains(uri.ToString())), It.IsAny<SendOptions>()));
     }

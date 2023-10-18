@@ -66,7 +66,7 @@ public class NotificationService : INotificationService
     {
         var templateId = applicationConfiguration.Notifications.Templates[notification.TemplateName];
         var tokens = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(notification.Tokens);
-        var link = new Uri(notification.Member.UserType == UserTypeApprentice ? applicationConfiguration.ApprenticeAanRouteUrl : applicationConfiguration.EmployerAanRouteUrl, $"links/{notification.Id}");
+        var link = new Uri(notification.Member.UserType == UserTypeApprentice ? applicationConfiguration.ApprenticeAanBaseUrl : applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
         tokens.Add(LinkTokenKey, link.ToString());
 
         return new(templateId, notification.Member.Email, tokens);
