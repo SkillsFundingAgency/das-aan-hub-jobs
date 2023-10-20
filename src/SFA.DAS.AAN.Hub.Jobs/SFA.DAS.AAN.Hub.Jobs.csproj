@@ -8,7 +8,7 @@
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.2.0" />
     <PackageReference Include="SFA.DAS.Configuration.AzureTableStorage" Version="3.0.84" />
     <PackageReference Include="SFA.DAS.Notifications.Messages" Version="3.0.10" />
-    <PackageReference Include="SFA.DAS.NServiceBus.Extensions" Version="17.1.14" />
+    <PackageReference Include="SFA.DAS.NServiceBus" Version="17.0.49" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="4.7.2" />
