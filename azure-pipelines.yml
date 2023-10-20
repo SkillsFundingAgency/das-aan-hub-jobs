@@ -54,8 +54,6 @@ stages:
   - group: AT das-aan-hub-jobs
   jobs:
   - template: pipeline-templates/job/deploy.yml
-    variables:
-      NServiceBusConnectionString: $(NServiceBusConnectionString)
     parameters:
       Environment: AT
       SolutionBaseName: $(SolutionBaseName)
