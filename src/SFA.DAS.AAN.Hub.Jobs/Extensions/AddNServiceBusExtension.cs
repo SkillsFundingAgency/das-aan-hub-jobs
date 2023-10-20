@@ -8,7 +8,6 @@ using SFA.DAS.Notifications.Messages.Commands;
 using SFA.DAS.NServiceBus.Configuration;
 using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
 using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
-using SFA.DAS.NServiceBus.Hosting;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
 
@@ -37,23 +36,24 @@ internal static class AddNServiceBusExtension
 
         endpointConfiguration.SendOnly();
 
-#if DEBUG
-        var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
-        transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
-        var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
-        transport.ConnectionString(connectionString);
-#else
+        if (configuration["EnvironmentName"] == "LOCAL")
+        {
+            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+            transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
+            var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
+            transport.ConnectionString(connectionString);
+        }
+        else
+        {
 
-        endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
-#endif
+            endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
+        }
+
         var endpointInstance = Endpoint.Start(endpointConfiguration).GetAwaiter().GetResult();
 
         builder.Services
             .AddSingleton(p => endpointInstance)
             .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
-#if !DEBUG
-        builder.Services.AddHostedService<NServiceBusHostedService>();
-#endif
 
         return builder;
     }
