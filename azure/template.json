@@ -1,75 +1,78 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json",
     "contentVersion": "1.0.0.0",
-  "parameters": {
-    "resourceEnvironmentName": {
-      "type": "string"
+    "parameters": {
+        "resourceEnvironmentName": {
+            "type": "string"
+        },
+        "environmentName": {
+            "type": "string"
+        },
+        "serviceName": {
+            "type": "string"
+        },
+        "sharedEnvResourceGroup": {
+            "type": "string"
+        },
+        "configurationStorageConnectionString": {
+            "type": "securestring"
+        },
+        "loggingRedisConnectionString": {
+            "type": "securestring"
+        },
+        "loggingRedisKey": {
+            "type": "string"
+        },
+        "tags": {
+            "type": "object"
+        },
+        "resourceGroupLocation": {
+            "type": "string"
+        },
+        "sharedStorageAccountConnectionString": {
+            "type": "securestring"
+        },
+        "sharedEnvVirtualNetworkName": {
+            "type": "string"
+        },
+        "sharedServiceBusName": {
+            "type": "string"
+        },
+        "subnetObject": {
+            "type": "object"
+        },
+        "subnetServiceEndpointList": {
+            "type": "array"
+        },
+        "subnetDelegations": {
+            "type": "array"
+        },
+        "workerAccessRestrictions": {
+            "type": "array"
+        },
+        "appServicePlanInstances": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "appServicePlanSize": {
+            "type": "string",
+            "defaultValue": "1"
+        },
+        "logAnalyticsSubscriptionId": {
+            "type": "string",
+            "defaultValue": "[subscription().subscriptionId]"
+        },
+        "logAnalyticsWorkspaceName": {
+            "type": "string"
+        },
+        "sharedManagementResourceGroup": {
+            "type": "string"
+        },
+        "utcValue": {
+            "type": "string",
+            "defaultValue": "[utcNow()]"
+        }
     },
-    "environmentName": {
-      "type": "string"
-    },
-    "serviceName": {
-      "type": "string"
-    },
-    "sharedEnvResourceGroup": {
-      "type": "string"
-    },
-    "configurationStorageConnectionString": {
-      "type": "securestring"
-    },
-    "loggingRedisConnectionString": {
-      "type": "securestring"
-    },
-    "loggingRedisKey": {
-      "type": "string"
-    },
-    "tags": {
-      "type": "object"
-    },
-    "resourceGroupLocation": {
-      "type": "string"
-    },
-    "sharedStorageAccountConnectionString": {
-      "type": "securestring"
-    },
-    "sharedEnvVirtualNetworkName": {
-      "type": "string"
-    },
-    "subnetObject": {
-      "type": "object"
-    },
-    "subnetServiceEndpointList": {
-      "type": "array"
-    },
-    "subnetDelegations": {
-      "type": "array"
-    },
-    "workerAccessRestrictions": {
-      "type": "array"
-    },
-    "appServicePlanInstances": {
-      "type": "int",
-      "defaultValue": 1
-    },
-    "appServicePlanSize": {
-      "type": "string",
-      "defaultValue": "1"
-    },
-    "logAnalyticsSubscriptionId": {
-      "type": "string",
-      "defaultValue": "[subscription().subscriptionId]"
-    },
-    "logAnalyticsWorkspaceName": {
-      "type": "string"
-    },
-    "sharedManagementResourceGroup": {
-      "type": "string"
-    },
-    "utcValue": {
-      "type": "string",
-      "defaultValue": "[utcNow()]"
-    }
-  },
     "variables": {
         "deploymentUrlBase": "https://raw.githubusercontent.com/SkillsFundingAgency/das-platform-building-blocks/master/templates/",
         "resourceNamePrefix": "[toLower(concat('das-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
@@ -260,6 +263,30 @@
                 "[variables('resourceGroupName')]",
                 "[concat(variables('appServicePlanName'), '-', parameters('utcValue'))]"
             ]
+        },
+        {
+            "apiVersion": "2021-04-01",
+            "name": "[concat('role-assignment-', variables('functionAppName'), '-', parameters('utcValue'))]",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('sharedEnvResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'role-assignments/role-assignment-service-bus.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "principalId": {
+                        "value": "[reference(concat(variables('functionAppName'), '-', parameters('utcValue'))).outputs.managedServiceIdentityId.value]"
+                    },
+                    "assignmentType": {
+                        "value": "ServiceBusOwner"
+                    },
+                    "resourceName": {
+                        "value": "[parameters('sharedServiceBusName')]"
+                    }
+                }
+            }
         }
     ],
     "outputs": {
