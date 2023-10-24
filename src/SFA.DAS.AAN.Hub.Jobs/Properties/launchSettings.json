@@ -2,7 +2,7 @@
   "profiles": {
     "SFA.DAS.AAN.Hub.Jobs": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7118",
+      "commandLineArgs": "--port 7118 --verbose",
       "launchBrowser": false
     }
   }

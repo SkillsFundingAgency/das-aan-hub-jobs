@@ -1,28 +1,27 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using SFA.DAS.AAN.Hub.Data;
+using SFA.DAS.AAN.Hub.Jobs.Services;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Functions;
 
 public class SendNotificationsFunction
 {
-    private readonly IAanDataContext _dataContext;
+    private readonly INotificationService _notificationService;
 
-    public SendNotificationsFunction(IAanDataContext dataContext)
+    public SendNotificationsFunction(INotificationService notificationService)
     {
-        _dataContext = dataContext;
+        _notificationService = notificationService;
     }
 
     [FunctionName(nameof(SendNotificationsFunction))]
-    public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)] TimerInfo timer,
-        ILogger log)
+    public async Task Run([TimerTrigger("%ApplicationConfiguration:Notifications:Schedule%", RunOnStartup = true)] TimerInfo timer, ILogger log, CancellationToken cancellationToken)
     {
         log.LogInformation($"{nameof(SendNotificationsFunction)} has been triggered.");
 
-        var nots = await _dataContext.Notifications.ToListAsync();
+        var count = await _notificationService.ProcessNotificationBatch(cancellationToken);
 
-        log.LogInformation($"Processed {nots.Count} notifications.");
+        log.LogInformation($"Processed {count} notifications.");
     }
 }
