@@ -47,6 +47,9 @@
         "workerAccessRestrictions": {
             "type": "array"
         },
+        "corsPolicies": {
+            "type": "array"
+        },
         "appServicePlanInstances": {
             "type": "int",
             "defaultValue": 1
@@ -226,6 +229,9 @@
                     },
                     "ipSecurityRestrictions": {
                         "value": "[parameters('workerAccessRestrictions')]"
+                    },
+                    "allowedOrigins": {
+                        "value": "[parameters('corsPolicies')]"
                     }
                 }
             },
