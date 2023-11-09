@@ -293,7 +293,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+                "[concat(variables('functionAppName'), '-', parameters('utcValue'))]"
             ]
         }
     ],
