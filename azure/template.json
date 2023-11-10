@@ -270,11 +270,11 @@
                 "mode": "Incremental",
                 "templateLink": {
                     "uri": "https://raw.githubusercontent.com/SkillsFundingAgency/das-platform-building-blocks/testing_cors_json/templates/cors-policies.json",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "functionAppName": {
-                            "value": "[variables('functionAppName')]"
-                        }
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "functionAppName": {
+                        "value": "[variables('functionAppName')]"
                     }
                 }
             },
