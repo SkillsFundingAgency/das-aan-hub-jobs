@@ -47,12 +47,6 @@
         "workerAccessRestrictions": {
             "type": "array"
         },
-        "corsPolicies": {
-            "type": "array",
-            "defaultValue": [
-                "*"
-            ]
-        },
         "appServicePlanInstances": {
             "type": "int",
             "defaultValue": 1
