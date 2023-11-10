@@ -274,22 +274,14 @@
             "resourceGroup": "[variables('resourceGroupName')]",
             "properties": {
                 "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'cors-policies.json')]",
                     "contentVersion": "1.0.0.0",
-                    "resources": [
-                        {
-                            "type": "Microsoft.Web/sites/config",
-                            "name": "[concat(variables('functionAppName'), '/web')]",
-                            "apiVersion": "2020-10-01",
-                            "properties": {
-                                "cors": {
-                                    "allowedOrigins": "[parameters('corsPolicies')]",
-                                    "supportCredentials": false
-                                }
-                            }
+                    "parameters": {
+                        "functionAppName": {
+                            "value": "[variables('functionAppName')]"
                         }
-                    ]
+                    }
                 }
             },
             "dependsOn": [
