@@ -20,7 +20,7 @@ public class SendNotificationsFunction
     {
         log.LogInformation($"{nameof(SendNotificationsFunction)} has been triggered.");
 
-        var count = await _notificationService.ProcessNotificationBatch(cancellationToken);
+        var count = await _notificationService.ProcessNotificationBatch(log, cancellationToken);
 
         log.LogInformation($"Processed {count} notifications.");
     }

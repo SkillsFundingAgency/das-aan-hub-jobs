@@ -17,6 +17,6 @@ public class SendNotificationsFunctionTests
 
         await sut.Run(timerInfo, Mock.Of<ILogger>(), cancellationToken);
 
-        serviceMock.Verify(s => s.ProcessNotificationBatch(cancellationToken));
+        serviceMock.Verify(s => s.ProcessNotificationBatch(It.IsAny<ILogger>(), cancellationToken));
     }
 }

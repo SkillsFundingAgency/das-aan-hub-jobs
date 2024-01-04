@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data;
@@ -15,7 +16,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
 public interface INotificationService
 {
-    Task<int> ProcessNotificationBatch(CancellationToken cancellationToken);
+    Task<int> ProcessNotificationBatch(ILogger logger, CancellationToken cancellationToken);
 }
 
 public class NotificationService : INotificationService
@@ -24,7 +25,7 @@ public class NotificationService : INotificationService
     public const string LinkTokenKey = "link";
 
     private readonly INotificationsRepository _notificationRepository;
-    private readonly IOptions<ApplicationConfiguration> _applicationConfigurationOptions;
+    private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IAanDataContext _aanDataContext;
     private readonly IMessageSession _messageSession;
 
@@ -35,25 +36,18 @@ public class NotificationService : INotificationService
         IMessageSession messageSession)
     {
         _notificationRepository = notificationRepository;
-        _applicationConfigurationOptions = applicationConfigurationOptions;
+        _applicationConfiguration = applicationConfigurationOptions.Value;
         _aanDataContext = aanDataContext;
         _messageSession = messageSession;
     }
 
-    public async Task<int> ProcessNotificationBatch(CancellationToken cancellationToken)
+    public async Task<int> ProcessNotificationBatch(ILogger logger, CancellationToken cancellationToken)
     {
-        var applicationConfiguration = _applicationConfigurationOptions.Value;
-
-        var pendingNotifications = await _notificationRepository.GetPendingNotifications(applicationConfiguration.Notifications.BatchSize);
+        var pendingNotifications = await _notificationRepository.GetPendingNotifications(_applicationConfiguration.Notifications.BatchSize);
 
         if (!pendingNotifications.Any()) return 0;
 
-        var commands = pendingNotifications.Select(n => CreateCommand(n, applicationConfiguration));
-
-        var tasks = commands.Select(c => _messageSession.Send(c));
-
-        var now = DateTime.UtcNow;
-        pendingNotifications.ForEach(n => n.SentTime = now);
+        var tasks = pendingNotifications.Select(n => SendNotification(n, logger, cancellationToken));
 
         await Task.WhenAll(tasks);
 
@@ -62,11 +56,28 @@ public class NotificationService : INotificationService
         return pendingNotifications.Count;
     }
 
-    private static SendEmailCommand CreateCommand(Notification notification, ApplicationConfiguration applicationConfiguration)
+    private async Task SendNotification(Notification notification, ILogger logger, CancellationToken cancellationToken)
     {
-        var templateId = applicationConfiguration.Notifications.Templates[notification.TemplateName];
+        try
+        {
+            var command = CreateCommand(notification);
+            await _messageSession.Send(command);
+            notification.SentTime = DateTime.UtcNow;
+        }
+        catch (Exception ex)
+        {
+            // catch all exceptions to allow other notifications to go forward
+            logger.LogError(ex, $"Error sending out notification with id: {notification.Id}");
+        }
+    }
+
+    private SendEmailCommand CreateCommand(Notification notification)
+    {
+        var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
         var tokens = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(notification.Tokens);
-        var link = new Uri(notification.Member.UserType == UserTypeApprentice ? applicationConfiguration.ApprenticeAanBaseUrl : applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
+
+        // add link token
+        var link = new Uri(notification.Member.UserType == UserTypeApprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
         tokens.Add(LinkTokenKey, link.ToString());
 
         return new(templateId, notification.Member.Email, tokens);

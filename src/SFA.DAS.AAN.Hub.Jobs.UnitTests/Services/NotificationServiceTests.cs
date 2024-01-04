@@ -1,8 +1,9 @@
 ﻿using AutoFixture;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using NServiceBus;
-using NUnit.Framework.Internal;
 using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Repositories;
@@ -38,6 +39,7 @@ public class NotificationServiceTests
 
         _notifications = fixture
             .Build<Notification>()
+            .Without(n => n.SentTime)
             .WithValues(n => n.TemplateName, _applicationConfiguration.Notifications.Templates.Keys.ToArray())
             .With(n => n.Tokens, System.Text.Json.JsonSerializer.Serialize(fixture.Create<TestTokens>()))
             .CreateMany(_applicationConfiguration.Notifications.Templates.Count)
@@ -46,10 +48,11 @@ public class NotificationServiceTests
         _repositoryMock.Setup(r => r.GetPendingNotifications(_applicationConfiguration.Notifications.BatchSize)).ReturnsAsync(_notifications);
 
         _messagingSessionMock = new Mock<IMessageSession>();
+        _messagingSessionMock.Setup(m => m.Send(It.Is<SendEmailCommand>(c => c.RecipientsAddress == _notifications.First().Member.Email), It.IsAny<SendOptions>())).Throws<Exception>();
 
         _sut = new(_repositoryMock.Object, _optionsMock.Object, _contextMock.Object, _messagingSessionMock.Object);
 
-        await _sut.ProcessNotificationBatch(_cancellationToken);
+        await _sut.ProcessNotificationBatch(Mock.Of<ILogger>(), _cancellationToken);
     }
 
     [Test]
@@ -61,18 +64,18 @@ public class NotificationServiceTests
         _messagingSessionMock.Verify(m => m.Send(It.IsAny<SendEmailCommand>(), It.IsAny<SendOptions>()), Times.Exactly(_notifications.Count));
 
     [Test]
-    public void ThenUpdatesAllTheNotifications() => _contextMock.Verify(c => c.SaveChangesAsync(_cancellationToken));
+    public void ThenUpdatesSuccessfulNotificationsOnly() => _notifications.Count(n => n.SentTime.HasValue).Should().Be(2);
 
     [Test]
     public void ThenConvertsNotificationToSendEmailCommand()
     {
         var notification = _notifications.First();
         var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
-        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.RecipientsAddress == notification.Member.Email), It.IsAny<SendOptions>()));
+        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.RecipientsAddress == notification.Member.Email), It.IsAny<SendOptions>()), Times.Once);
     }
 
     [Test]
-    public void ThenAddsLinksBaseOnMemberUserType()
+    public void ThenAddsLinkTokenBasedOnMemberUserType()
     {
         var notification = _notifications.First();
 
