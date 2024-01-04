@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -38,6 +39,7 @@ public class NotificationServiceTests
 
         _notifications = fixture
             .Build<Notification>()
+            .Without(n => n.SentTime)
             .WithValues(n => n.TemplateName, _applicationConfiguration.Notifications.Templates.Keys.ToArray())
             .With(n => n.Tokens, System.Text.Json.JsonSerializer.Serialize(fixture.Create<TestTokens>()))
             .CreateMany(_applicationConfiguration.Notifications.Templates.Count)
@@ -62,7 +64,7 @@ public class NotificationServiceTests
         _messagingSessionMock.Verify(m => m.Send(It.IsAny<SendEmailCommand>(), It.IsAny<SendOptions>()), Times.Exactly(_notifications.Count));
 
     [Test]
-    public void ThenUpdatesSuccessfulNotificationsOnly() => _contextMock.Verify(c => c.SaveChangesAsync(_cancellationToken), Times.Exactly(_notifications.Count - 1));
+    public void ThenUpdatesSuccessfulNotificationsOnly() => _notifications.Count(n => n.SentTime.HasValue).Should().Be(2);
 
     [Test]
     public void ThenConvertsNotificationToSendEmailCommand()
