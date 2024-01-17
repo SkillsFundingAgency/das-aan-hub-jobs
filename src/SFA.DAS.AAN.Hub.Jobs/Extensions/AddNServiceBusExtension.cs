@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,16 +37,20 @@ internal static class AddNServiceBusExtension
 
         endpointConfiguration.SendOnly();
 
+
         if (configuration["EnvironmentName"] == "LOCAL")
         {
-            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
-            transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
-            var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
-            transport.ConnectionString(connectionString);
+            var notificationJob = configuration["AzureWebJobs.SendNotificationsFunction.Disabled"];
+            if (string.IsNullOrWhiteSpace(notificationJob) || notificationJob.Equals("false", StringComparison.OrdinalIgnoreCase))
+            {
+                var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+                transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
+                var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
+                transport.ConnectionString(connectionString);
+            }
         }
         else
         {
-
             endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
         }
 
