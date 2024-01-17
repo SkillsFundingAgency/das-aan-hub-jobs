@@ -8,7 +8,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=SkillsFundingAgency_das-aan-hub-jobs&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SkillsFundingAgency_das-aan-hub-jobs)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg?longCache=true&style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
 
-This web solution is part of Apprentice Ambassador Network (AAN) project. Here we have background jobs in form of Azure functions that carry out periodical jobs like sending out notifications or cleaning up data.
+This azure functions solution is part of Apprentice Ambassador Network (AAN) project. Here we have background jobs in form of Azure functions that carry out periodical jobs like sending out notifications or cleaning up data.
 
 ## How It Works
 
@@ -19,7 +19,7 @@ The notification job uses NServiceBus protocol to send a message per notificatio
 ### Pre-Requisites
 * A clone of this repository
 * Storage emulator like Azurite for local config source
-* An Azure Service Bus instance with a Topic called `bundle-1`
+* An Azure Service Bus instance with a Topic called `bundle-1` (optional, only required when working on notification function)
 
 ### Config
 
