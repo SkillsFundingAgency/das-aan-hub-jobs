@@ -31,6 +31,10 @@ public class NotificationServiceTests
         _contextMock = new();
 
         Fixture fixture = new();
+
+        fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
+        fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
         _cancellationToken = fixture.Create<CancellationToken>();
 
         _applicationConfiguration = fixture.Create<ApplicationConfiguration>();
