@@ -45,11 +45,11 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     {
         var query = _context.Members
                 .Where(m => m.Status == "Removed" && m.Email != m.Id.ToString())
-            //     .Include(m => m.MemberPreferences)
-            //     .Include(m => m.MemberProfiles)
-            // .Include(m => m.Notifications)
-            // .Include(m => m.Audits);
-            ;
+                .Include(m => m.MemberPreferences)
+                .Include(m => m.MemberProfiles)
+                .Include(m => m.Notifications)
+                .Include(m => m.Audits);
+
         return await query.ToListAsync();
     }
 
@@ -82,7 +82,8 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
 
     public async Task DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken)
     {
-        _context.Audits.RemoveRange(memberAudits);
+        var auditsToRemove = memberAudits.Select(a => a).Where(x => x.Resource != "Member").ToList();
+        _context.Audits.RemoveRange(auditsToRemove);
     }
 
     public async Task DeleteMemberApprentice(Member member, CancellationToken cancellationToken)
