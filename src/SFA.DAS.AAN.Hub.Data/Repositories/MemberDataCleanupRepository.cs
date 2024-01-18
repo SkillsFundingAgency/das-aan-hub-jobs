@@ -9,10 +9,10 @@ public interface IMemberDataCleanupRepository
     Task<List<Member>> GetWithdrawnOrDeletedMembers();
     Task<List<Member>> GetRemovedMembers();
     Task UpdateMemberDetails(Member member, CancellationToken cancellationToken);
-    Task DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken);
-    Task DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken);
-    Task DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken);
-    Task DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken);
+    void DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken);
+    void DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken);
+    void DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken);
+    void DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken);
     Task DeleteMemberApprentice(Member member, CancellationToken cancellationToken);
     Task DeleteMemberEmployer(Member member, CancellationToken cancellationToken);
     Task UpdateMemberFutureAttendance(Member member, CancellationToken cancellationToken);
@@ -65,22 +65,22 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
         existingMember.LastUpdatedDate = DateTime.UtcNow;
     }
 
-    public async Task DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken)
+    public void DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken)
     {
         _context.MemberProfiles.RemoveRange(memberProfiles);
     }
 
-    public async Task DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken)
+    public void DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken)
     {
         _context.MemberPreferences.RemoveRange(memberPreferences);
     }
 
-    public async Task DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken)
+    public void DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken)
     {
         _context.Notifications.RemoveRange(memberNotifications);
     }
 
-    public async Task DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken)
+    public void DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken)
     {
         var auditsToRemove = memberAudits.Select(a => a).Where(x => x.Resource != "Member").ToList();
         _context.Audits.RemoveRange(auditsToRemove);
@@ -113,10 +113,9 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
             .Select(c => c.Id)
             .ToListAsync(cancellationToken);
 
-        foreach (Attendance attendance in attendances)
+        foreach (Attendance attendance in attendances.Where(a => futureCalendarEvents.Contains(a.CalendarEventId)))
         {
-            if (futureCalendarEvents.Contains(attendance.CalendarEventId))
-                attendance.IsAttending = false;
+            attendance.IsAttending = false;
         }
     }
 }

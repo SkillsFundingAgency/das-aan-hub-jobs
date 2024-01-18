@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SFA.DAS.AAN.Hub.Data;
@@ -32,17 +31,17 @@ public class MemberDataCleanupService : IMemberDataCleanupService
         foreach (Member member in membersToClean)
         {
             await UpdateMember(member, cancellationToken);
-            await UpdateMemberProfile(member, cancellationToken);
-            await UpdateMemberPreference(member, cancellationToken);
-            await UpdateMemberNotifications(member, cancellationToken);
-            await UpdateMemberAudit(member, cancellationToken);
+            UpdateMemberProfile(member, cancellationToken);
+            UpdateMemberPreference(member, cancellationToken);
+            UpdateMemberNotifications(member, cancellationToken);
+            UpdateMemberAudit(member, cancellationToken);
             await DeleteMemberUserType(member, cancellationToken);
             await UpdateMemberFutureAttendance(member, cancellationToken);
 
             await _aanDataContext.SaveChangesAsync(cancellationToken);
         }
 
-        return membersToClean.Count();
+        return membersToClean.Count;
     }
 
     private async Task UpdateMember(Member member, CancellationToken cancellationToken)
@@ -50,24 +49,24 @@ public class MemberDataCleanupService : IMemberDataCleanupService
         await _memberDataCleanupRepository.UpdateMemberDetails(member, cancellationToken);
     }
 
-    private async Task UpdateMemberProfile(Member member, CancellationToken cancellationToken)
+    private void UpdateMemberProfile(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.DeleteMemberProfile(member.MemberProfiles, cancellationToken);
+        _memberDataCleanupRepository.DeleteMemberProfile(member.MemberProfiles, cancellationToken);
     }
 
-    private async Task UpdateMemberPreference(Member member, CancellationToken cancellationToken)
+    private void UpdateMemberPreference(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.DeleteMemberPreference(member.MemberPreferences, cancellationToken);
+        _memberDataCleanupRepository.DeleteMemberPreference(member.MemberPreferences, cancellationToken);
     }
 
-    private async Task UpdateMemberNotifications(Member member, CancellationToken cancellationToken)
+    private void UpdateMemberNotifications(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.DeleteMemberNotifications(member.Notifications, cancellationToken);
+        _memberDataCleanupRepository.DeleteMemberNotifications(member.Notifications, cancellationToken);
     }
 
-    private async Task UpdateMemberAudit(Member member, CancellationToken cancellationToken)
+    private void UpdateMemberAudit(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.DeleteMemberAudit(member.Audits, cancellationToken);
+        _memberDataCleanupRepository.DeleteMemberAudit(member.Audits, cancellationToken);
     }
 
     private async Task DeleteMemberUserType(Member member, CancellationToken cancellationToken)
