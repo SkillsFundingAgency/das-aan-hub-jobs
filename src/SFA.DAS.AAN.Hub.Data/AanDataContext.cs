@@ -6,6 +6,14 @@ namespace SFA.DAS.AAN.Hub.Data;
 public class AanDataContext : DbContext, IAanDataContext
 {
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Member> Members => Set<Member>();
+    public DbSet<MemberProfile> MemberProfiles => Set<MemberProfile>();
+    public DbSet<MemberPreference> MemberPreferences => Set<MemberPreference>();
+    public DbSet<Audit> Audits => Set<Audit>();
+    public DbSet<Apprentice> Apprentices => Set<Apprentice>();
+    public DbSet<Employer> Employers => Set<Employer>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
 
     public AanDataContext(DbContextOptions<AanDataContext> options) : base(options) { }
 

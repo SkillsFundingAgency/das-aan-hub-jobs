@@ -7,4 +7,5 @@ public class ApplicationConfiguration
     public Uri ApprenticeAanBaseUrl { get; set; }
     public Uri EmployerAanBaseUrl { get; set; }
     public NotificationsConfiguration Notifications { get; set; }
+    public MemberDataCleanupConfiguration MemberDataCleanup { get; set; }
 }

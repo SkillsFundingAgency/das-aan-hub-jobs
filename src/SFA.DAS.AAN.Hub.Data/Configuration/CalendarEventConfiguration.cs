@@ -4,14 +4,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Data.Configuration;
-
 [ExcludeFromCodeCoverage]
-public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
+public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent>
 {
-    public void Configure(EntityTypeBuilder<Notification> builder)
+    public void Configure(EntityTypeBuilder<CalendarEvent> builder)
     {
-        builder.ToTable(nameof(Notification));
+        builder.ToTable(nameof(CalendarEvent));
         builder.HasKey(x => x.Id);
-        builder.HasOne(x => x.Member);
     }
 }
