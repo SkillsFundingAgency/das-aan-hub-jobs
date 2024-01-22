@@ -107,7 +107,7 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     public async Task<List<CalendarEvent>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken)
     {
         return await _context.CalendarEvents
-            .Where(c => attendanceEventIds.Contains(c.Id) && c.StartDate > DateTime.Today)
+            .Where(c => attendanceEventIds.Contains(c.Id))
             .Select(c => c)
             .ToListAsync(cancellationToken);
     }
