@@ -23,15 +23,21 @@ public class MemberDataCleanupServiceTests
         Fixture fixture = new();
         _cancellationToken = fixture.Create<CancellationToken>();
 
+        var auditsToRemove = new List<Audit>
+            { new() { ActionedBy = new Guid(), Id = 1, Member = new Member(), Resource = "Apprentice" } };
+
+        var auditsToKeep = new List<Audit>
+            { new() { ActionedBy = new Guid(), Id = 1, Member = new Member(), Resource = "Member" } };
+
         _membersWithdrawnOrDeleted = new List<Member>
         {
-            new() { Id = new Guid(), UserType = UserType.Apprentice, Email = "email2", Status = "withdrawn" },
-            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email3", Status = "deleted"}
+            new() { Id = new Guid(), UserType = UserType.Apprentice, Email = "email2", Status = "withdrawn", Audits = auditsToRemove},
+            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email3", Status = "deleted", Audits = auditsToKeep}
         };
 
         _membersRemoved = new List<Member>
         {
-            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email1", Status = "removed" }
+            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email1", Status = "removed", Audits = auditsToRemove}
         };
         _repositoryMock = new Mock<IMemberDataCleanupRepository>();
         _repositoryMock.Setup(x => x.GetWithdrawnOrDeletedMembers()).ReturnsAsync(_membersWithdrawnOrDeleted);
@@ -72,15 +78,17 @@ public class MemberDataCleanupServiceTests
     [Test]
     public void ThenDeletesEachMemberAudit() =>
         _repositoryMock.Verify(x => x.DeleteMemberAudit(It.IsAny<List<Audit>>(), _cancellationToken),
-            Times.Exactly(3));
+            Times.Exactly(2));
 
     [Test]
     public void ThenDeletesEachApprenticeMember() =>
-        _repositoryMock.Verify(x => x.DeleteMemberApprentice(It.IsAny<Member>(), _cancellationToken), Times.Once());
+        _repositoryMock.Verify(x => x.DeleteMemberApprentice(It.IsAny<List<Apprentice>>(), _cancellationToken),
+            Times.Once());
 
     [Test]
     public void ThenDeletesEachEmployerMember() =>
-        _repositoryMock.Verify(x => x.DeleteMemberEmployer(It.IsAny<Member>(), _cancellationToken), Times.Exactly(2));
+        _repositoryMock.Verify(x => x.DeleteMemberEmployer(It.IsAny<List<Employer>>(), _cancellationToken),
+            Times.Exactly(2));
 
     [Test]
     public void ThenUpdatesEachMemberFutureAttendance() =>
