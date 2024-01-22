@@ -13,8 +13,8 @@ public interface IMemberDataCleanupRepository
     void DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken);
     void DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken);
     void DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken);
-    void DeleteMemberApprentice(List<Apprentice> memberApprentices, CancellationToken cancellationToken);
-    void DeleteMemberEmployer(List<Employer> memberEmployers, CancellationToken cancellationToken);
+    void DeleteMemberApprentice(Apprentice memberApprentice, CancellationToken cancellationToken);
+    void DeleteMemberEmployer(Employer memberEmployer, CancellationToken cancellationToken);
     Task<List<Attendance>> GetMemberAttendances(Guid memberId, CancellationToken cancellationToken);
     Task<List<CalendarEvent>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken);
     void UpdateMemberFutureAttendance(Attendance memberAttendance, CancellationToken cancellationToken);
@@ -51,8 +51,8 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
                 .Include(m => m.MemberProfiles)
                 .Include(m => m.Notifications)
                 .Include(m => m.Audits)
-                .Include(m => m.Apprentices)
-                .Include(m => m.Employers);
+                .Include(m => m.Apprentice)
+                .Include(m => m.Employer);
 
         return await query.ToListAsync();
     }
@@ -87,14 +87,14 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
         _context.Audits.RemoveRange(memberAudits);
     }
 
-    public void DeleteMemberApprentice(List<Apprentice> memberApprentices, CancellationToken cancellationToken)
+    public void DeleteMemberApprentice(Apprentice memberApprentice, CancellationToken cancellationToken)
     {
-        _context.Apprentices.RemoveRange(memberApprentices);
+        _context.Apprentices.RemoveRange(memberApprentice);
     }
 
-    public void DeleteMemberEmployer(List<Employer> memberEmployers, CancellationToken cancellationToken)
+    public void DeleteMemberEmployer(Employer memberEmployer, CancellationToken cancellationToken)
     {
-        _context.Employers.RemoveRange(memberEmployers);
+        _context.Employers.RemoveRange(memberEmployer);
     }
 
     public async Task<List<Attendance>> GetMemberAttendances(Guid memberId, CancellationToken cancellationToken)

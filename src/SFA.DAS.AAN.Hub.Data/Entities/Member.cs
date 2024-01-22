@@ -16,6 +16,6 @@ public class Member
     public virtual List<MemberPreference> MemberPreferences { get; set; } = new List<MemberPreference>();
     public virtual List<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual List<Audit> Audits { get; set; } = new List<Audit>();
-    public virtual List<Apprentice>? Apprentices { get; set; }
-    public virtual List<Employer>? Employers { get; set; }
+    public virtual Apprentice? Apprentice { get; set; }
+    public virtual Employer? Employer { get; set; }
 }

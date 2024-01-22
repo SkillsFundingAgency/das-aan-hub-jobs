@@ -18,5 +18,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.HasMany(m => m.MemberPreferences).WithOne(mp => mp.Member);
         builder.HasMany(m => m.Notifications).WithOne(n => n.Member);
         builder.HasMany(m => m.Audits).WithOne(a => a.Member).HasForeignKey(a => a.ActionedBy);
+        builder.HasOne(m => m.Apprentice).WithOne(a => a.Member);
+        builder.HasOne(m => m.Employer).WithOne(e => e.Member);
     }
 }

@@ -77,11 +77,11 @@ public class MemberDataCleanupService : IMemberDataCleanupService
     {
         if (member.UserType == UserType.Apprentice)
         {
-            _memberDataCleanupRepository.DeleteMemberApprentice(member.Apprentices, cancellationToken);
+            _memberDataCleanupRepository.DeleteMemberApprentice(member.Apprentice, cancellationToken);
         }
         else if (member.UserType == UserType.Employer)
         {
-            _memberDataCleanupRepository.DeleteMemberEmployer(member.Employers, cancellationToken);
+            _memberDataCleanupRepository.DeleteMemberEmployer(member.Employer, cancellationToken);
         }
     }
 

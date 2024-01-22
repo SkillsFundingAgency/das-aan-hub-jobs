@@ -101,12 +101,12 @@ public class MemberDataCleanupServiceTests
 
     [Test]
     public void ThenDeletesEachApprenticeMember() =>
-        _repositoryMock.Verify(x => x.DeleteMemberApprentice(It.IsAny<List<Apprentice>>(), _cancellationToken),
+        _repositoryMock.Verify(x => x.DeleteMemberApprentice(It.IsAny<Apprentice>(), _cancellationToken),
             Times.Once());
 
     [Test]
     public void ThenDeletesEachEmployerMember() =>
-        _repositoryMock.Verify(x => x.DeleteMemberEmployer(It.IsAny<List<Employer>>(), _cancellationToken),
+        _repositoryMock.Verify(x => x.DeleteMemberEmployer(It.IsAny<Employer>(), _cancellationToken),
             Times.Exactly(2));
 
     [Test]
