@@ -8,14 +8,16 @@ public interface IMemberDataCleanupRepository
 {
     Task<List<Member>> GetWithdrawnOrDeletedMembers();
     Task<List<Member>> GetRemovedMembers();
-    Task UpdateMemberDetails(Member member, CancellationToken cancellationToken);
+    void UpdateMemberDetails(Member member, CancellationToken cancellationToken);
     void DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken);
     void DeleteMemberPreference(List<MemberPreference> memberPreferences, CancellationToken cancellationToken);
     void DeleteMemberNotifications(List<Notification> memberNotifications, CancellationToken cancellationToken);
     void DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken);
-    Task DeleteMemberApprentice(Member member, CancellationToken cancellationToken);
-    Task DeleteMemberEmployer(Member member, CancellationToken cancellationToken);
-    Task UpdateMemberFutureAttendance(Member member, CancellationToken cancellationToken);
+    void DeleteMemberApprentice(List<Apprentice> memberApprentices, CancellationToken cancellationToken);
+    void DeleteMemberEmployer(List<Employer> memberEmployers, CancellationToken cancellationToken);
+    Task<List<Attendance>> GetMemberAttendances(Guid memberId, CancellationToken cancellationToken);
+    Task<List<Guid>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken);
+    void UpdateMemberFutureAttendance(Attendance memberAttendance, CancellationToken cancellationToken);
 }
 
 [ExcludeFromCodeCoverage]
@@ -29,11 +31,11 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     }
     public async Task<List<Member>> GetWithdrawnOrDeletedMembers()
     {
-        var statuses = new String[] { "Withdrawn", "Deleted" };
         var query = _context.Members
-            .Where(m => statuses.Contains(m.Status) && m.Email != m.Id.ToString() &&
-                        m.EndDate < DateTime.Today.AddDays(-14))
-            .Include(m => m.MemberPreferences)
+            .Where(m => m.Status == MemberStatus.Withdrawn.ToString() || m.Status == MemberStatus.Deleted.ToString()
+                && m.Email != m.Id.ToString()
+                && m.EndDate.Value.Day < DateTime.Today.AddDays(-14).Day).
+            Include(m => m.MemberPreferences)
             .Include(m => m.MemberProfiles)
             .Include(m => m.Notifications)
             .Include(m => m.Audits);
@@ -44,25 +46,25 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     public async Task<List<Member>> GetRemovedMembers()
     {
         var query = _context.Members
-                .Where(m => m.Status == "Removed" && m.Email != m.Id.ToString())
+                .Where(m => m.Status == MemberStatus.Removed.ToString() && m.Email != m.Id.ToString())
                 .Include(m => m.MemberPreferences)
                 .Include(m => m.MemberProfiles)
                 .Include(m => m.Notifications)
-                .Include(m => m.Audits);
+                .Include(m => m.Audits)
+                .Include(m => m.Apprentices)
+                .Include(m => m.Employers);
 
         return await query.ToListAsync();
     }
 
-    public async Task UpdateMemberDetails(Member member, CancellationToken cancellationToken)
+    public void UpdateMemberDetails(Member member, CancellationToken cancellationToken)
     {
-        var existingMember = await _context.Members.Where(m => m.Id == member.Id).FirstAsync(cancellationToken);
-
-        existingMember.FirstName = "Past";
-        existingMember.LastName = "Member";
-        existingMember.Email = member.Id.ToString();
-        existingMember.OrganisationName = "";
-        existingMember.IsRegionalChair = false;
-        existingMember.LastUpdatedDate = DateTime.UtcNow;
+        member.FirstName = "Past";
+        member.LastName = "Member";
+        member.Email = member.Id.ToString();
+        member.OrganisationName = "";
+        member.IsRegionalChair = false;
+        member.LastUpdatedDate = DateTime.UtcNow;
     }
 
     public void DeleteMemberProfile(List<MemberProfile> memberProfiles, CancellationToken cancellationToken)
@@ -82,40 +84,36 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
 
     public void DeleteMemberAudit(List<Audit> memberAudits, CancellationToken cancellationToken)
     {
-        var auditsToRemove = memberAudits.Select(a => a).Where(x => x.Resource != "Member").ToList();
-        _context.Audits.RemoveRange(auditsToRemove);
+        _context.Audits.RemoveRange(memberAudits);
     }
 
-    public async Task DeleteMemberApprentice(Member member, CancellationToken cancellationToken)
+    public void DeleteMemberApprentice(List<Apprentice> memberApprentices, CancellationToken cancellationToken)
     {
-        var apprentices = await _context.Apprentices.Where(a => a.MemberId == member.Id).FirstAsync(cancellationToken);
-
-        _context.Apprentices.RemoveRange(apprentices);
+        _context.Apprentices.RemoveRange(memberApprentices);
     }
 
-    public async Task DeleteMemberEmployer(Member member, CancellationToken cancellationToken)
+    public void DeleteMemberEmployer(List<Employer> memberEmployers, CancellationToken cancellationToken)
     {
-        var employers = await _context.Employers.Where(a => a.MemberId == member.Id).FirstAsync(cancellationToken);
-
-        _context.Employers.RemoveRange(employers);
+        _context.Employers.RemoveRange(memberEmployers);
     }
 
-    public async Task UpdateMemberFutureAttendance(Member member, CancellationToken cancellationToken)
+    public async Task<List<Attendance>> GetMemberAttendances(Guid memberId, CancellationToken cancellationToken)
     {
-        var attendances = await _context.Attendances
-            .Where(a => a.MemberId == member.Id)
+        return await _context.Attendances
+            .Where(a => a.MemberId == memberId)
             .ToListAsync(cancellationToken);
+    }
 
-        var attendanceEventIds = attendances.Select(a => a.CalendarEventId);
-
-        var futureCalendarEvents = await _context.CalendarEvents
+    public async Task<List<Guid>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken)
+    {
+        return await _context.CalendarEvents
             .Where(c => attendanceEventIds.Contains(c.Id) && c.StartDate > DateTime.Today)
             .Select(c => c.Id)
             .ToListAsync(cancellationToken);
+    }
 
-        foreach (Attendance attendance in attendances.Where(a => futureCalendarEvents.Contains(a.CalendarEventId)))
-        {
-            attendance.IsAttending = false;
-        }
+    public void UpdateMemberFutureAttendance(Attendance memberAttendance, CancellationToken cancellationToken)
+    {
+        memberAttendance.IsAttending = false;
     }
 }

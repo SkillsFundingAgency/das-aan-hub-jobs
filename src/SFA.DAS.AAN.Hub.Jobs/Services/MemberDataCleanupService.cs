@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SFA.DAS.AAN.Hub.Data;
@@ -30,12 +30,12 @@ public class MemberDataCleanupService : IMemberDataCleanupService
 
         foreach (Member member in membersToClean)
         {
-            await UpdateMember(member, cancellationToken);
+            UpdateMember(member, cancellationToken);
             UpdateMemberProfile(member, cancellationToken);
             UpdateMemberPreference(member, cancellationToken);
             UpdateMemberNotifications(member, cancellationToken);
             UpdateMemberAudit(member, cancellationToken);
-            await DeleteMemberUserType(member, cancellationToken);
+            DeleteMemberUserType(member, cancellationToken);
             await UpdateMemberFutureAttendance(member, cancellationToken);
 
             await _aanDataContext.SaveChangesAsync(cancellationToken);
@@ -44,9 +44,9 @@ public class MemberDataCleanupService : IMemberDataCleanupService
         return membersToClean.Count;
     }
 
-    private async Task UpdateMember(Member member, CancellationToken cancellationToken)
+    private void UpdateMember(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.UpdateMemberDetails(member, cancellationToken);
+        _memberDataCleanupRepository.UpdateMemberDetails(member, cancellationToken);
     }
 
     private void UpdateMemberProfile(Member member, CancellationToken cancellationToken)
@@ -66,23 +66,39 @@ public class MemberDataCleanupService : IMemberDataCleanupService
 
     private void UpdateMemberAudit(Member member, CancellationToken cancellationToken)
     {
-        _memberDataCleanupRepository.DeleteMemberAudit(member.Audits, cancellationToken);
+        var auditsToRemove = member.Audits.Select(a => a).Where(x => x.Resource != "Member").ToList();
+
+        if (auditsToRemove.Any())
+            _memberDataCleanupRepository.DeleteMemberAudit(auditsToRemove, cancellationToken);
     }
 
-    private async Task DeleteMemberUserType(Member member, CancellationToken cancellationToken)
+    private void DeleteMemberUserType(Member member, CancellationToken cancellationToken)
     {
-        if (string.Equals(member.UserType.ToString(), "apprentice", StringComparison.CurrentCultureIgnoreCase))
+        if (member.UserType == UserType.Apprentice)
         {
-            await _memberDataCleanupRepository.DeleteMemberApprentice(member, cancellationToken);
+            _memberDataCleanupRepository.DeleteMemberApprentice(member.Apprentices, cancellationToken);
         }
-        else if (string.Equals(member.UserType.ToString(), "employer", StringComparison.CurrentCultureIgnoreCase))
+        else if (member.UserType == UserType.Employer)
         {
-            await _memberDataCleanupRepository.DeleteMemberEmployer(member, cancellationToken);
+            _memberDataCleanupRepository.DeleteMemberEmployer(member.Employers, cancellationToken);
         }
     }
 
     private async Task UpdateMemberFutureAttendance(Member member, CancellationToken cancellationToken)
     {
-        await _memberDataCleanupRepository.UpdateMemberFutureAttendance(member, cancellationToken);
+        var attendances = await _memberDataCleanupRepository.GetMemberAttendances(member.Id, cancellationToken);
+
+        var attendanceEventIds = attendances.Select(a => a.CalendarEventId).ToList();
+
+        if (attendanceEventIds.Any())
+        {
+            var futureCalendarEvents =
+                _memberDataCleanupRepository.GetFutureCalendarEvents(attendanceEventIds, cancellationToken);
+
+            foreach (Attendance attendance in attendances.Where(a => futureCalendarEvents.Result.Contains(a.CalendarEventId)))
+            {
+                _memberDataCleanupRepository.UpdateMemberFutureAttendance(attendance, cancellationToken);
+            }
+        }
     }
 }
