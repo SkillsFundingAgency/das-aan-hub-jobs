@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SFA.DAS.AAN.Hub.Data;
@@ -95,7 +96,12 @@ public class MemberDataCleanupService : IMemberDataCleanupService
             var futureCalendarEvents =
                 _memberDataCleanupRepository.GetFutureCalendarEvents(attendanceEventIds, cancellationToken);
 
-            foreach (Attendance attendance in attendances.Where(a => futureCalendarEvents.Result.Contains(a.CalendarEventId)))
+            var futureEventIds = futureCalendarEvents.Result
+                .Where(e => e.StartDate > DateTime.Today)
+                .Select(e => e.Id)
+                .ToList();
+
+            foreach (Attendance attendance in attendances.Where(a => futureEventIds.Contains(a.CalendarEventId)))
             {
                 _memberDataCleanupRepository.UpdateMemberFutureAttendance(attendance, cancellationToken);
             }

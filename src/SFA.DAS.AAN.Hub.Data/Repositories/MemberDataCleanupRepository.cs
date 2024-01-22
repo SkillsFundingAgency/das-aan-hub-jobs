@@ -16,7 +16,7 @@ public interface IMemberDataCleanupRepository
     void DeleteMemberApprentice(List<Apprentice> memberApprentices, CancellationToken cancellationToken);
     void DeleteMemberEmployer(List<Employer> memberEmployers, CancellationToken cancellationToken);
     Task<List<Attendance>> GetMemberAttendances(Guid memberId, CancellationToken cancellationToken);
-    Task<List<Guid>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken);
+    Task<List<CalendarEvent>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken);
     void UpdateMemberFutureAttendance(Attendance memberAttendance, CancellationToken cancellationToken);
 }
 
@@ -104,11 +104,11 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<Guid>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken)
+    public async Task<List<CalendarEvent>> GetFutureCalendarEvents(List<Guid> attendanceEventIds, CancellationToken cancellationToken)
     {
         return await _context.CalendarEvents
             .Where(c => attendanceEventIds.Contains(c.Id) && c.StartDate > DateTime.Today)
-            .Select(c => c.Id)
+            .Select(c => c)
             .ToListAsync(cancellationToken);
     }
 

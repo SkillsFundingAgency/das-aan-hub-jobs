@@ -31,17 +31,36 @@ public class MemberDataCleanupServiceTests
 
         _membersWithdrawnOrDeleted = new List<Member>
         {
-            new() { Id = new Guid(), UserType = UserType.Apprentice, Email = "email2", Status = "withdrawn", Audits = auditsToRemove},
-            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email3", Status = "deleted", Audits = auditsToKeep}
+            new() { Id = new Guid("311a4faf-d0d9-4f76-8e5b-2ebe6f9c357a"), UserType = UserType.Apprentice, Email = "email2", Status = "withdrawn", Audits = auditsToRemove},
+            new() { Id = new Guid("b82f8d01-b443-4631-94b3-72747e8292e3"), UserType = UserType.Employer, Email = "email3", Status = "deleted", Audits = auditsToKeep}
         };
 
         _membersRemoved = new List<Member>
         {
-            new() { Id = new Guid(), UserType = UserType.Employer, Email = "email1", Status = "removed", Audits = auditsToRemove}
+            new() { Id = new Guid("afdbda6a-b019-48bf-ad4f-a36925e20dd8"), UserType = UserType.Employer, Email = "email1", Status = "removed", Audits = auditsToRemove}
         };
+
+        var calendarEvents = fixture.CreateMany<CalendarEvent>(3).ToList();
+        var attendances = fixture.CreateMany<Attendance>(3).ToList();
+        for (int i = 0; i < 3; i++)
+        {
+            attendances[i].CalendarEventId = calendarEvents[i].Id;
+            attendances[i].MemberId = _membersWithdrawnOrDeleted[0].Id;
+        }
+        calendarEvents[0].StartDate = DateTime.Now.AddDays(1);
+        calendarEvents[1].StartDate = DateTime.Now.AddDays(1);
+        calendarEvents[2].StartDate = DateTime.Today.AddDays(-1);
+
         _repositoryMock = new Mock<IMemberDataCleanupRepository>();
         _repositoryMock.Setup(x => x.GetWithdrawnOrDeletedMembers()).ReturnsAsync(_membersWithdrawnOrDeleted);
         _repositoryMock.Setup(x => x.GetRemovedMembers()).ReturnsAsync(_membersRemoved);
+        _repositoryMock.Setup(x => x.GetMemberAttendances(It.IsAny<Guid>(), _cancellationToken))
+            .ReturnsAsync(new List<Attendance>());
+        _repositoryMock.Setup(x => x.GetMemberAttendances(_membersWithdrawnOrDeleted[0].Id, _cancellationToken))
+            .ReturnsAsync(attendances);
+        _repositoryMock.Setup(x => x.GetFutureCalendarEvents(It.IsAny<List<Guid>>(), _cancellationToken))
+            .ReturnsAsync(calendarEvents);
+
 
         _sut = new MemberDataCleanupService(_contextMock.Object, _repositoryMock.Object);
 
@@ -92,6 +111,6 @@ public class MemberDataCleanupServiceTests
 
     [Test]
     public void ThenUpdatesEachMemberFutureAttendance() =>
-        _repositoryMock.Verify(x => x.UpdateMemberFutureAttendance(It.IsAny<Member>(), _cancellationToken),
-            Times.Exactly(3));
+        _repositoryMock.Verify(x => x.UpdateMemberFutureAttendance(It.IsAny<Attendance>(), _cancellationToken),
+            Times.Exactly(2));
 }
