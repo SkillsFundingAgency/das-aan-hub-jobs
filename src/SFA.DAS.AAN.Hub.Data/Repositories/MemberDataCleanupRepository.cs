@@ -38,7 +38,9 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
             Include(m => m.MemberPreferences)
             .Include(m => m.MemberProfiles)
             .Include(m => m.Notifications)
-            .Include(m => m.Audits);
+            .Include(m => m.Audits)
+            .Include(m => m.Apprentice)
+            .Include(m => m.Employer);
 
         return await query.ToListAsync();
     }
