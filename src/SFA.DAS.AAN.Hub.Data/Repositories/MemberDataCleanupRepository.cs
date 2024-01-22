@@ -34,7 +34,7 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
         var query = _context.Members
             .Where(m => m.Status == MemberStatus.Withdrawn.ToString() || m.Status == MemberStatus.Deleted.ToString()
                 && m.Email != m.Id.ToString()
-                && m.EndDate.Value.Day < DateTime.Today.AddDays(-14).Day).
+                && m.EndDate!.Value.Day < DateTime.Today.AddDays(-14).Day).
             Include(m => m.MemberPreferences)
             .Include(m => m.MemberProfiles)
             .Include(m => m.Notifications)
