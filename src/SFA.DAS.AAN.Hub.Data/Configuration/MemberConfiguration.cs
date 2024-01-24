@@ -14,6 +14,7 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.ToTable(nameof(Member));
         builder.HasKey(x => x.Id);
         builder.Property(m => m.UserType).HasConversion(new EnumToStringConverter<UserType>());
+        builder.Property(m => m.Status).HasConversion(new EnumToStringConverter<MemberStatus>());
         builder.HasMany(m => m.MemberProfiles).WithOne(mp => mp.Member);
         builder.HasMany(m => m.MemberPreferences).WithOne(mp => mp.Member);
         builder.HasMany(m => m.Notifications).WithOne(n => n.Member);
