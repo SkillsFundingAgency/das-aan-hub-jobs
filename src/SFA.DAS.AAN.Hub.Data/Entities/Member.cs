@@ -5,7 +5,7 @@ public class Member
     public Guid Id { get; set; }
     public UserType UserType { get; set; }
     public string Email { get; set; } = null!;
-    public string Status { get; set; } = null!;
+    public MemberStatus Status { get; set; }
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public string? OrganisationName { get; set; }

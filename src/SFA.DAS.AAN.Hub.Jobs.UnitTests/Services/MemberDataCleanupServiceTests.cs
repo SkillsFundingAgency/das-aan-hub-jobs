@@ -31,13 +31,13 @@ public class MemberDataCleanupServiceTests
 
         _membersWithdrawnOrDeleted = new List<Member>
         {
-            new() { Id = new Guid("311a4faf-d0d9-4f76-8e5b-2ebe6f9c357a"), UserType = UserType.Apprentice, Email = "email2", Status = "withdrawn", Audits = auditsToRemove},
-            new() { Id = new Guid("b82f8d01-b443-4631-94b3-72747e8292e3"), UserType = UserType.Employer, Email = "email3", Status = "deleted", Audits = auditsToKeep}
+            new() { Id = new Guid("311a4faf-d0d9-4f76-8e5b-2ebe6f9c357a"), UserType = UserType.Apprentice, Email = "email2", Status = MemberStatus.Withdrawn, Audits = auditsToRemove},
+            new() { Id = new Guid("b82f8d01-b443-4631-94b3-72747e8292e3"), UserType = UserType.Employer, Email = "email3", Status = MemberStatus.Deleted, Audits = auditsToKeep}
         };
 
         _membersRemoved = new List<Member>
         {
-            new() { Id = new Guid("afdbda6a-b019-48bf-ad4f-a36925e20dd8"), UserType = UserType.Employer, Email = "email1", Status = "removed", Audits = auditsToRemove}
+            new() { Id = new Guid("afdbda6a-b019-48bf-ad4f-a36925e20dd8"), UserType = UserType.Employer, Email = "email1", Status = MemberStatus.Removed, Audits = auditsToRemove}
         };
 
         var calendarEvents = fixture.CreateMany<CalendarEvent>(3).ToList();

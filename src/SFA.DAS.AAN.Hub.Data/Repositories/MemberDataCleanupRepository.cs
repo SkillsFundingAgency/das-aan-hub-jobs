@@ -32,10 +32,10 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     public async Task<List<Member>> GetWithdrawnOrDeletedMembers()
     {
         var query = _context.Members
-            .Where(m => m.Status == MemberStatus.Withdrawn.ToString() || m.Status == MemberStatus.Deleted.ToString()
+            .Where(m => m.Status == MemberStatus.Withdrawn || m.Status == MemberStatus.Deleted
                 && m.Email != m.Id.ToString()
-                && m.EndDate!.Value.Day < DateTime.Today.AddDays(-14).Day).
-            Include(m => m.MemberPreferences)
+                && m.EndDate!.Value.Day < DateTime.Today.AddDays(-14).Day)
+            .Include(m => m.MemberPreferences)
             .Include(m => m.MemberProfiles)
             .Include(m => m.Notifications)
             .Include(m => m.Audits)
@@ -48,7 +48,7 @@ public class MemberDataCleanupRepository : IMemberDataCleanupRepository
     public async Task<List<Member>> GetRemovedMembers()
     {
         var query = _context.Members
-                .Where(m => m.Status == MemberStatus.Removed.ToString() && m.Email != m.Id.ToString())
+                .Where(m => m.Status == MemberStatus.Removed && m.Email != m.Id.ToString())
                 .Include(m => m.MemberPreferences)
                 .Include(m => m.MemberProfiles)
                 .Include(m => m.Notifications)
