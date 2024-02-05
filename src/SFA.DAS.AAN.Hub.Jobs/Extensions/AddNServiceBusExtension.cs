@@ -37,6 +37,7 @@ internal static class AddNServiceBusExtension
 
         endpointConfiguration.SendOnly();
 
+        var startServiceBusEndpoint = false;
 
         if (configuration["EnvironmentName"] == "LOCAL")
         {
@@ -47,18 +48,23 @@ internal static class AddNServiceBusExtension
                 transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
                 var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
                 transport.ConnectionString(connectionString);
+                startServiceBusEndpoint = true;
             }
         }
         else
         {
             endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
+            startServiceBusEndpoint = true;
         }
 
-        var endpointInstance = Endpoint.Start(endpointConfiguration).GetAwaiter().GetResult();
+        if (startServiceBusEndpoint)
+        {
+            var endpointInstance = Endpoint.Start(endpointConfiguration).GetAwaiter().GetResult();
 
-        builder.Services
-            .AddSingleton(p => endpointInstance)
-            .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
+            builder.Services
+                .AddSingleton(p => endpointInstance)
+                .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
+        }
 
         return builder;
     }

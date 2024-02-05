@@ -46,6 +46,7 @@ public static class AddAanDataContextExtension
 
         services.AddScoped<IAanDataContext, AanDataContext>(provider => provider.GetService<AanDataContext>()!);
         services.AddScoped<INotificationsRepository, NotificationsRepository>();
+        services.AddScoped<IMemberDataCleanupRepository, MemberDataCleanupRepository>();
         return services;
     }
 }

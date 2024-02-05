@@ -6,12 +6,11 @@ using SFA.DAS.AAN.Hub.Data.Entities;
 namespace SFA.DAS.AAN.Hub.Data.Configuration;
 
 [ExcludeFromCodeCoverage]
-public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
+public class MemberPreferenceConfiguration : IEntityTypeConfiguration<MemberPreference>
 {
-    public void Configure(EntityTypeBuilder<Notification> builder)
+    public void Configure(EntityTypeBuilder<MemberPreference> builder)
     {
-        builder.ToTable(nameof(Notification));
+        builder.ToTable(nameof(MemberPreference));
         builder.HasKey(x => x.Id);
-        builder.HasOne(x => x.Member);
     }
 }

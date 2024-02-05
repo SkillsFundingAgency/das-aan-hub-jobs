@@ -21,7 +21,6 @@ public interface INotificationService
 
 public class NotificationService : INotificationService
 {
-    public const string UserTypeApprentice = "Apprentice";
     public const string LinkTokenKey = "link";
 
     private readonly INotificationsRepository _notificationRepository;
@@ -77,7 +76,7 @@ public class NotificationService : INotificationService
         var tokens = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(notification.Tokens);
 
         // add link token
-        var link = new Uri(notification.Member.UserType == UserTypeApprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
+        var link = new Uri(notification.Member.UserType == UserType.Apprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
         tokens.Add(LinkTokenKey, link.ToString());
 
         return new(templateId, notification.Member.Email, tokens);
