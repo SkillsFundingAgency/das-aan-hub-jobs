@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.AAN.Hub.Data", "SFA
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{DCE3D45B-F3A0-42A1-89E1-88E2DAE64B68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Jobs.UnitTests", "SFA.DAS.AAN.Hub.Jobs.UnitTests\SFA.DAS.AAN.Hub.Jobs.UnitTests.csproj", "{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.AAN.Hub.Jobs.UnitTests", "SFA.DAS.AAN.Hub.Jobs.UnitTests\SFA.DAS.AAN.Hub.Jobs.UnitTests.csproj", "{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

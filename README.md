@@ -36,7 +36,8 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
     "ConfigNames": "SFA.DAS.AANHub.Jobs",
     "EnvironmentName": "LOCAL"
   },
-  "AzureWebJobs.SendNotificationsFunction.Disabled": "false"
+  "AzureWebJobs.SendNotificationsFunction.Disabled": "false",
+  "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false"
 }
 ```
 When actively developing a function, it may be a good idea to disable other functions by adding `"AzureWebJobs.<function-name>.Disabled": "true"` to the local config, example seen above. 
@@ -46,13 +47,13 @@ When actively developing a function, it may be a good idea to disable other func
 * The functions uses database defined in [das-aan-hub-api](https://github.com/SkillsFundingAgency/das-ann-hub-api) as primary data source.
 * The notification functions depends on [das-notifications](https://github.com/SkillsFundingAgency/das-notifications) Api to listen to the queue and forward the notification requests to Gov Notify to send out emails.
 
-### 📦 Internal Package Depedencies
+### 📦 Internal Package Dependencies
 * SFA.DAS.Notifications.Messages
 * SFA.DAS.NServiceBus
 * SFA.DAS.Configuration.AzureTableStorage
 
 ## Technologies
-* .NetCore 6.0
+* .NetCore 8.0
 * Azure Functions V4
 * Azure Table Storage
 * NServiceBus
