@@ -31,7 +31,7 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
   "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true;",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true;",
     "ConfigNames": "SFA.DAS.AANHub.Jobs",
     "EnvironmentName": "LOCAL"
