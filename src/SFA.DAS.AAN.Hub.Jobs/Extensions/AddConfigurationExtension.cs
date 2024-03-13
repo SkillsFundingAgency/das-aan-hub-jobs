@@ -1,21 +1,20 @@
-﻿using System.IO;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using SFA.DAS.Configuration.AzureTableStorage;
+using System.IO;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
 
 public static class AddConfigurationExtension
 {
-    public static void AddConfiguration(this IFunctionsConfigurationBuilder builder)
+    public static void AddConfiguration(this IConfigurationBuilder builder)
     {
-        builder.ConfigurationBuilder
+        builder
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("local.settings.json", optional: true);
 
-        var config = builder.ConfigurationBuilder.Build();
+        var config = builder.Build();
 
-        builder.ConfigurationBuilder.AddAzureTableStorage(options =>
+        builder.AddAzureTableStorage(options =>
         {
             options.ConfigurationKeys = config["ConfigNames"].Split(",");
             options.StorageConnectionString = config["ConfigurationStorageConnectionString"];

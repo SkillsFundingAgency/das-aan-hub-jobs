@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data;
@@ -11,12 +6,17 @@ using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Repositories;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
 public interface INotificationService
 {
-    Task<int> ProcessNotificationBatch(ILogger logger, CancellationToken cancellationToken);
+    Task<int> ProcessNotificationBatch(CancellationToken cancellationToken);
 }
 
 public class NotificationService : INotificationService
@@ -27,26 +27,28 @@ public class NotificationService : INotificationService
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IAanDataContext _aanDataContext;
     private readonly IMessageSession _messageSession;
+    private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         INotificationsRepository notificationRepository,
         IOptions<ApplicationConfiguration> applicationConfigurationOptions,
         IAanDataContext aanDataContext,
-        IMessageSession messageSession)
+        IMessageSession messageSession, ILogger<NotificationService> logger)
     {
         _notificationRepository = notificationRepository;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _aanDataContext = aanDataContext;
         _messageSession = messageSession;
+        _logger = logger;
     }
 
-    public async Task<int> ProcessNotificationBatch(ILogger logger, CancellationToken cancellationToken)
+    public async Task<int> ProcessNotificationBatch(CancellationToken cancellationToken)
     {
         var pendingNotifications = await _notificationRepository.GetPendingNotifications(_applicationConfiguration.Notifications.BatchSize);
 
         if (!pendingNotifications.Any()) return 0;
 
-        var tasks = pendingNotifications.Select(n => SendNotification(n, logger, cancellationToken));
+        var tasks = pendingNotifications.Select(n => SendNotification(n, cancellationToken));
 
         await Task.WhenAll(tasks);
 
@@ -55,7 +57,7 @@ public class NotificationService : INotificationService
         return pendingNotifications.Count;
     }
 
-    private async Task SendNotification(Notification notification, ILogger logger, CancellationToken cancellationToken)
+    private async Task SendNotification(Notification notification, CancellationToken cancellationToken)
     {
         try
         {
@@ -66,7 +68,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             // catch all exceptions to allow other notifications to go forward
-            logger.LogError(ex, $"Error sending out notification with id: {notification.Id}");
+            _logger.LogError(ex, $"Error sending out notification with id: {notification.Id}");
         }
     }
 
