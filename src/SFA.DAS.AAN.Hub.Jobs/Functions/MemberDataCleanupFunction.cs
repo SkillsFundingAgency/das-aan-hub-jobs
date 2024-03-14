@@ -18,10 +18,10 @@ public class MemberDataCleanupFunction
     [Function(nameof(MemberDataCleanupFunction))]
     public async Task Run([TimerTrigger("0 0 4 * * 1-5", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"MemberDataCleanupFunction has been triggered.");
+        _logger.LogInformation("MemberDataCleanupFunction has been triggered.");
 
         var count = await _memberDataCleanupService.ProcessMemberDataCleanup(cancellationToken);
 
-        _logger.LogInformation($"Data anonymised for {count} members.", count);
+        _logger.LogInformation("Data anonymised for {count} members.", count);
     }
 }

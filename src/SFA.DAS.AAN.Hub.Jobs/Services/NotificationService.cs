@@ -67,8 +67,9 @@ public class NotificationService : INotificationService
         }
         catch (Exception ex)
         {
+            var notificationId = notification.Id;
             // catch all exceptions to allow other notifications to go forward
-            _logger.LogError(ex, $"Error sending out notification with id: {notification.Id}", notification.Id);
+            _logger.LogError(ex, "Error sending out notification with id: {notificationId}", notificationId);
         }
     }
 

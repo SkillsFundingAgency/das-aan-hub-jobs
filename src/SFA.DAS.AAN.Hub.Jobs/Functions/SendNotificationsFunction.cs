@@ -19,10 +19,10 @@ public class SendNotificationsFunction
     [Function(nameof(SendNotificationsFunction))]
     public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"SendNotificationsFunction has been triggered.");
+        _logger.LogInformation("SendNotificationsFunction has been triggered.");
 
         var count = await _notificationService.ProcessNotificationBatch(cancellationToken);
 
-        _logger.LogInformation($"Processed {count} notifications.", count);
+        _logger.LogInformation("Processed {count} notifications.", count);
     }
 }
