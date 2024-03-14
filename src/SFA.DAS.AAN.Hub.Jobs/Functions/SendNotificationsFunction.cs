@@ -17,7 +17,6 @@ public class SendNotificationsFunction
     }
 
     [Function(nameof(SendNotificationsFunction))]
-    //public async Task Run([TimerTrigger("%ApplicationConfiguration:Notifications:Schedule%", RunOnStartup = true)] TimerInfo timer, ILogger log, CancellationToken cancellationToken)
     public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"{nameof(SendNotificationsFunction)} has been triggered.");
