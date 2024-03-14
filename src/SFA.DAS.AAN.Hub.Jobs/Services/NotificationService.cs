@@ -46,9 +46,9 @@ public class NotificationService : INotificationService
     {
         var pendingNotifications = await _notificationRepository.GetPendingNotifications(_applicationConfiguration.Notifications.BatchSize);
 
-        if (!pendingNotifications.Any()) return 0;
+        if (pendingNotifications.Count == 0) return 0;
 
-        var tasks = pendingNotifications.Select(n => SendNotification(n, cancellationToken));
+        var tasks = pendingNotifications.Select(n => SendNotification(n));
 
         await Task.WhenAll(tasks);
 
@@ -57,7 +57,7 @@ public class NotificationService : INotificationService
         return pendingNotifications.Count;
     }
 
-    private async Task SendNotification(Notification notification, CancellationToken cancellationToken)
+    private async Task SendNotification(Notification notification)
     {
         try
         {
@@ -68,7 +68,7 @@ public class NotificationService : INotificationService
         catch (Exception ex)
         {
             // catch all exceptions to allow other notifications to go forward
-            _logger.LogError(ex, $"Error sending out notification with id: {notification.Id}");
+            _logger.LogError(ex, $"Error sending out notification with id: {notification.Id}", notification.Id);
         }
     }
 
