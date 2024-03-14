@@ -13,10 +13,11 @@ public class SendNotificationsFunctionTests
     public async Task Run_InvokesService(TimerInfo timerInfo, CancellationToken cancellationToken)
     {
         Mock<INotificationService> serviceMock = new();
-        SendNotificationsFunction sut = new(serviceMock.Object);
+        Mock<ILogger<SendNotificationsFunction>> loggerMock = new();
+        SendNotificationsFunction sut = new(serviceMock.Object, loggerMock.Object);
 
-        await sut.Run(timerInfo, Mock.Of<ILogger>(), cancellationToken);
+        await sut.Run(timerInfo, cancellationToken);
 
-        serviceMock.Verify(s => s.ProcessNotificationBatch(It.IsAny<ILogger>(), cancellationToken));
+        serviceMock.Verify(s => s.ProcessNotificationBatch(cancellationToken));
     }
 }

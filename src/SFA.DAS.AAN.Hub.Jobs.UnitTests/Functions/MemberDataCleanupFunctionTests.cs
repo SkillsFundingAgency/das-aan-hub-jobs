@@ -12,9 +12,10 @@ public class MemberDataCleanupFunctionTests
     public async Task Run_InvokesService(TimerInfo timerInfo, CancellationToken cancellationToken)
     {
         Mock<IMemberDataCleanupService> serviceMock = new();
-        MemberDataCleanupFunction sut = new MemberDataCleanupFunction(serviceMock.Object);
+        Mock<ILogger<MemberDataCleanupFunction>> logger = new();
+        MemberDataCleanupFunction sut = new MemberDataCleanupFunction(serviceMock.Object, logger.Object);
 
-        await sut.Run(timerInfo, Mock.Of<ILogger>(), cancellationToken);
+        await sut.Run(timerInfo, cancellationToken);
 
         serviceMock.Verify(x => x.ProcessMemberDataCleanup(cancellationToken));
     }
