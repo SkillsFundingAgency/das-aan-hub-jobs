@@ -1,8 +1,8 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Jobs.Services;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Functions;
 public class MemberDataCleanupFunction
@@ -16,7 +16,7 @@ public class MemberDataCleanupFunction
     }
 
     [Function(nameof(MemberDataCleanupFunction))]
-    public async Task Run([TimerTrigger("0 0 4 * * 1-5", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
+    public async Task Run([TimerTrigger("%MemberDataCleanupFunctionSchedule%", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
     {
         _logger.LogInformation("MemberDataCleanupFunction has been triggered.");
 

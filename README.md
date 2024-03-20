@@ -34,7 +34,9 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
      "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true;",
     "ConfigNames": "SFA.DAS.AANHub.Jobs",
-    "EnvironmentName": "LOCAL"
+    "EnvironmentName": "LOCAL",
+    "SendNotificationsFunctionSchedule": "0 */3 * * * *",
+    "MemberDataCleanupFunctionSchedule": "0 */3 * * * *"
   },
   "AzureWebJobs.SendNotificationsFunction.Disabled": "false",
   "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false"
