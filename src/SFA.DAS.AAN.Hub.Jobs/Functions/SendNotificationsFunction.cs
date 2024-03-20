@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -9,19 +9,20 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions;
 public class SendNotificationsFunction
 {
     private readonly INotificationService _notificationService;
-
-    public SendNotificationsFunction(INotificationService notificationService)
+    private readonly ILogger<SendNotificationsFunction> _logger;
+    public SendNotificationsFunction(INotificationService notificationService, ILogger<SendNotificationsFunction> logger)
     {
         _notificationService = notificationService;
+        _logger = logger;
     }
 
-    [FunctionName(nameof(SendNotificationsFunction))]
-    public async Task Run([TimerTrigger("%ApplicationConfiguration:Notifications:Schedule%", RunOnStartup = true)] TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+    [Function(nameof(SendNotificationsFunction))]
+    public async Task Run([TimerTrigger("%SendNotificationsFunctionSchedule%", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
     {
-        log.LogInformation($"{nameof(SendNotificationsFunction)} has been triggered.");
+        _logger.LogInformation("SendNotificationsFunction has been triggered.");
 
-        var count = await _notificationService.ProcessNotificationBatch(log, cancellationToken);
+        var count = await _notificationService.ProcessNotificationBatch(cancellationToken);
 
-        log.LogInformation($"Processed {count} notifications.");
+        _logger.LogInformation("Processed {count} notifications.", count);
     }
 }
