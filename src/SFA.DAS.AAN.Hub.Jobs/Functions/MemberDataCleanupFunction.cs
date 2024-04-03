@@ -16,7 +16,7 @@ public class MemberDataCleanupFunction
     }
 
     [Function(nameof(MemberDataCleanupFunction))]
-    public async Task Run([TimerTrigger("%MemberDataCleanupFunctionSchedule%", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
+    public async Task Run([TimerTrigger("%MemberDataCleanupFunctionSchedule%", RunOnStartup = false)] TimerInfo timer, CancellationToken cancellationToken)
     {
         _logger.LogInformation("MemberDataCleanupFunction has been triggered.");
 

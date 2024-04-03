@@ -10,6 +10,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="RestEase" Version="1.6.4" />
+    <PackageReference Include="RestEase.HttpClientFactory" Version="1.6.4" />
+    <PackageReference Include="SFA.DAS.Api.Common" Version="17.1.88" />
     <PackageReference Include="SFA.DAS.Configuration.AzureTableStorage" Version="3.0.84" />
     <PackageReference Include="SFA.DAS.Notifications.Messages" Version="3.0.10" />
     <PackageReference Include="SFA.DAS.NServiceBus" Version="17.0.49" />

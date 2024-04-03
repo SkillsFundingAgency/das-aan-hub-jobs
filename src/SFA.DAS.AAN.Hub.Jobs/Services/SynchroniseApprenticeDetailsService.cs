@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using RestEase;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
-using SFA.DAS.AAN.Hub.Jobs.Api.Interfaces;
+using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 using SFA.DAS.AAN.Hub.Jobs.Api.Response;
 using SFA.DAS.AAN.Hub.Jobs.Functions;
 using System;
@@ -20,21 +21,21 @@ public interface ISynchroniseApprenticeDetailsService
 public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetailsService
 {
     private readonly ILogger<SynchroniseApprenticeDetailsService> _logger;
-    private readonly IApprenticeAccountsApi _apprenticeAccountsApi;
+    private readonly IApprenticeAccountsApiClient _apprenticeAccountsApiClient;
     private readonly IApprenticeRepository _apprenticeshipRespository;
     private readonly IJobAuditRepository _jobAuditRepository;
     private readonly IMemberRepository _memberRepository;
 
     public SynchroniseApprenticeDetailsService(
         ILogger<SynchroniseApprenticeDetailsService> logger,
-        IApprenticeAccountsApi apprenticeAccountsApi,
+        IApprenticeAccountsApiClient apprenticeAccountsApiClient,
         IApprenticeRepository apprenticeshipRespository,
         IJobAuditRepository jobAuditRepository,
         IMemberRepository memberRepository
     )
     {
         _logger = logger;
-        _apprenticeAccountsApi = apprenticeAccountsApi;
+        _apprenticeAccountsApiClient = apprenticeAccountsApiClient;
         _apprenticeshipRespository = apprenticeshipRespository;
         _jobAuditRepository = jobAuditRepository;
         _memberRepository = memberRepository;
@@ -54,40 +55,39 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
             if (apprentices is null || !apprentices.Any())
             {
-                await RecordAudit(cancellationToken, audit);
+                await RecordAudit(cancellationToken, audit, null);
                 return default;
             }
 
-            await QueryApprenticeApi(cancellationToken, apprentices);
+            var response = await QueryApprenticeApi(cancellationToken, apprentices);
 
-            int updatedApprenticeCount = await UpdateApprenticeDetails(cancellationToken);
+            int updatedApprenticeCount = await UpdateApprenticeDetails(cancellationToken, response);
 
-            await RecordAudit(cancellationToken, audit);
+            await RecordAudit(cancellationToken, audit, response);
 
             return updatedApprenticeCount;
         }
         catch(Exception _exception)
         {
             _logger.LogError(_exception, "{MethodName} Failed.", nameof(SynchroniseApprentices));
-            await RecordAudit(cancellationToken, audit);
+            await RecordAudit(cancellationToken, audit, null);
             return default;
         }
     }
 
-    private async Task QueryApprenticeApi(CancellationToken cancellationToken, List<Apprentice> apprentices)
+    private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(CancellationToken cancellationToken, List<Apprentice> apprentices)
     {
         try
         {
             var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(cancellationToken);
 
-            string apiUrl = "apprentices/sync";
+            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
 
-            if (lastJobAudit != null)
-                apiUrl += $"?updatedSinceDate={lastJobAudit.StartTime:yyyy-MM-dd}";
-
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToList();
-
-            await _apprenticeAccountsApi.PostValueAsync(cancellationToken, apiUrl, apprenticeIds);
+            return await _apprenticeAccountsApiClient.SynchroniseApprentices(
+                apprenticeIds,
+                lastJobAudit?.StartTime, 
+                cancellationToken
+            );
         }
         catch (Exception exception)
         {
@@ -96,11 +96,11 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         }
     }
 
-    private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken)
+    private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken, Response<ApprenticeSyncResponseDto> apprenticeSyncResponseDto)
     {
         try
         {
-            var responseObject = _apprenticeAccountsApi.GetDeserializedResponseObject<ApprenticeSyncResponseDto>();
+            var responseObject = apprenticeSyncResponseDto.GetContent();
 
             if(responseObject is null || !responseObject.Apprentices.Any())
                 return default;
@@ -144,12 +144,12 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         }
     }
 
-    private async Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit)
+    private async Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit, Response<ApprenticeSyncResponseDto>? response)
     {
         try
         {
             jobAudit.EndTime = DateTime.UtcNow;
-            jobAudit.Notes = _apprenticeAccountsApi.ResponseContent;
+            jobAudit.Notes = response?.StringContent;
             await _jobAuditRepository.RecordAudit(cancellationToken, jobAudit);
         }
         catch(Exception _exception)
