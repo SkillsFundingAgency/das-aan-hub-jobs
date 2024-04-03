@@ -1,6 +1,6 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using SFA.DAS.AAN.Hub.Jobs.Interfaces;
+using SFA.DAS.AAN.Hub.Jobs.Services;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,21 +8,24 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
 {
     public class SynchroniseApprenticeDetailsFunction
     {
+        private ILogger<SynchroniseApprenticeDetailsFunction> _logger;
+
         private readonly ISynchroniseApprenticeDetailsService _synchroniseApprenticeDetailsService;
 
-        public SynchroniseApprenticeDetailsFunction(ISynchroniseApprenticeDetailsService synchroniseApprenticeDetailsService)
+        public SynchroniseApprenticeDetailsFunction(ILogger<SynchroniseApprenticeDetailsFunction> logger, ISynchroniseApprenticeDetailsService synchroniseApprenticeDetailsService)
         {
             _synchroniseApprenticeDetailsService = synchroniseApprenticeDetailsService;
+            _logger = logger;
         }
 
-        [FunctionName(nameof(SynchroniseApprenticeDetailsFunction))]
-        public async Task Run([TimerTrigger("?", RunOnStartup = true)] TimerInfo timer, ILogger log, CancellationToken cancellationToken)
+        [Function(nameof(SynchroniseApprenticeDetailsFunction))]
+        public async Task Run([TimerTrigger("%SynchroniseApprenticeDetailsFunctionSchedule%", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
         {
-            log.LogInformation("{MethodName} has been triggered.", nameof(SynchroniseApprenticeDetailsFunction));
+            _logger.LogInformation("{MethodName} has been triggered.", nameof(SynchroniseApprenticeDetailsFunction));
 
-            var count = await _synchroniseApprenticeDetailsService.SynchroniseApprentices(log, cancellationToken);
+            var count = await _synchroniseApprenticeDetailsService.SynchroniseApprentices(cancellationToken);
 
-            log.LogInformation("Processed {ApprenticeCount} apprentices.", count);
+            _logger.LogInformation("Processed {ApprenticeCount} apprentices.", count);
         }
     }
 }

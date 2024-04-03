@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Data.Repositories;
 using System.Diagnostics.CodeAnalysis;
 
@@ -51,6 +52,9 @@ public static class AddAanDataContextExtension
         services.AddScoped<IAanDataContext, AanDataContext>(provider => provider.GetService<AanDataContext>()!);
         services.AddScoped<INotificationsRepository, NotificationsRepository>();
         services.AddScoped<IMemberDataCleanupRepository, MemberDataCleanupRepository>();
+        services.AddScoped<IApprenticeRepository, ApprenticeRepository>();
+        services.AddScoped<IJobAuditRepository, JobAuditRepository>();
+        services.AddScoped<IMemberRepository, MemberRepository>();
         return services;
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Data.Repositories;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
 using System;

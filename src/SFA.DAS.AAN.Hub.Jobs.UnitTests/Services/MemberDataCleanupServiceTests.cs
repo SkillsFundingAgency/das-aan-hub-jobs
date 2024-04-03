@@ -2,7 +2,7 @@
 using Moq;
 using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Data.Repositories;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Services;
 
 namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services;

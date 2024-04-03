@@ -1,13 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using SFA.DAS.AAN.Hub.Data.Entities;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 
 namespace SFA.DAS.AAN.Hub.Data.Repositories;
-
-public interface INotificationsRepository
-{
-    Task<List<Notification>> GetPendingNotifications(int batchSize);
-}
 
 [ExcludeFromCodeCoverage]
 internal class NotificationsRepository : INotificationsRepository
