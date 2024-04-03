@@ -61,7 +61,21 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
             var response = await QueryApprenticeApi(cancellationToken, apprentices);
 
-            int updatedApprenticeCount = await UpdateApprenticeDetails(cancellationToken, response);
+            if(response is null)
+            {
+                await RecordAudit(cancellationToken, audit, null);
+                return default;
+            }
+
+            var responseObject = response.GetContent();
+
+            if (!responseObject.Apprentices.Any())
+            {
+                await RecordAudit(cancellationToken, audit, null);
+                return default;
+            }
+
+            int updatedApprenticeCount = await UpdateApprenticeDetails(cancellationToken, responseObject);
 
             await RecordAudit(cancellationToken, audit, response);
 
@@ -96,18 +110,16 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         }
     }
 
-    private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken, Response<ApprenticeSyncResponseDto> apprenticeSyncResponseDto)
+    private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
     {
         try
         {
-            var responseObject = apprenticeSyncResponseDto.GetContent();
+            var apprentices = await _apprenticeshipRespository.GetApprentices(
+                cancellationToken, 
+                apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray()
+            );
 
-            if(responseObject is null || !responseObject.Apprentices.Any())
-                return default;
-
-            var apprentices = await _apprenticeshipRespository.GetApprentices(cancellationToken, responseObject.Apprentices.Select(a => a.ApprenticeID).ToArray());
-
-            if(!apprentices.Any())
+            if (!apprentices.Any())
                 return default;
 
             var members = await _memberRepository.GetMembers(cancellationToken, apprentices.Select(a => a.MemberId).ToArray());
@@ -119,7 +131,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
                 if (apprentice == null)
                     continue;
 
-                var apprenticeResponse = responseObject.Apprentices.FirstOrDefault(a => a.ApprenticeID == apprentice.ApprenticeId);
+                var apprenticeResponse = apprenticeSyncResponseDto.Apprentices.FirstOrDefault(a => a.ApprenticeID == apprentice.ApprenticeId);
 
                 if (apprenticeResponse != null)
                 {
