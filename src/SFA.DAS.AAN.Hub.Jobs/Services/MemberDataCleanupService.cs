@@ -1,10 +1,10 @@
-﻿using System;
+﻿using SFA.DAS.AAN.Hub.Data;
+using SFA.DAS.AAN.Hub.Data.Entities;
+using SFA.DAS.AAN.Hub.Data.Repositories;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using SFA.DAS.AAN.Hub.Data;
-using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Data.Repositories;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -69,7 +69,7 @@ public class MemberDataCleanupService : IMemberDataCleanupService
     {
         var auditsToRemove = member.Audits.Select(a => a).Where(x => x.Resource != "Member").ToList();
 
-        if (auditsToRemove.Any())
+        if (auditsToRemove.Count > 0)
             _memberDataCleanupRepository.DeleteMemberAudit(auditsToRemove, cancellationToken);
     }
 
@@ -91,7 +91,7 @@ public class MemberDataCleanupService : IMemberDataCleanupService
 
         var attendanceEventIds = attendances.Select(a => a.CalendarEventId).ToList();
 
-        if (attendanceEventIds.Any())
+        if (attendanceEventIds.Count > 0)
         {
             var futureCalendarEvents =
                 _memberDataCleanupRepository.GetFutureCalendarEvents(attendanceEventIds, cancellationToken);

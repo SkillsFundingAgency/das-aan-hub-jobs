@@ -24,6 +24,8 @@ public class NotificationServiceTests
     private ApplicationConfiguration _applicationConfiguration = null!;
     private List<Notification> _notifications = new();
     private NotificationService _sut = null!;
+    private Mock<ILogger<NotificationService>> _loggerMock = new();
+
 
     [SetUp]
     public async Task Init()
@@ -54,9 +56,9 @@ public class NotificationServiceTests
         _messagingSessionMock = new Mock<IMessageSession>();
         _messagingSessionMock.Setup(m => m.Send(It.Is<SendEmailCommand>(c => c.RecipientsAddress == _notifications.First().Member.Email), It.IsAny<SendOptions>())).Throws<Exception>();
 
-        _sut = new(_repositoryMock.Object, _optionsMock.Object, _contextMock.Object, _messagingSessionMock.Object);
+        _sut = new(_repositoryMock.Object, _optionsMock.Object, _contextMock.Object, _messagingSessionMock.Object, _loggerMock.Object);
 
-        await _sut.ProcessNotificationBatch(Mock.Of<ILogger>(), _cancellationToken);
+        await _sut.ProcessNotificationBatch(_cancellationToken);
     }
 
     [Test]

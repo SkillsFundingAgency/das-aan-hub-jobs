@@ -1,10 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Azure.Core;
+﻿using Azure.Core;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SFA.DAS.AAN.Hub.Data.Repositories;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SFA.DAS.AAN.Hub.Data.Extensions;
 
@@ -20,8 +21,11 @@ public static class AddAanDataContextExtension
         new VisualStudioCredential()
     );
 
-    public static IServiceCollection AddAanDataContext(this IServiceCollection services, string connectionString, string environmentName)
+    public static IServiceCollection AddAanDataContext(this IServiceCollection services, IConfiguration configuration)
     {
+        var sqlConnectionString = configuration["SqlConnectionString"]!;
+        var environmentName = configuration["EnvironmentName"]!;
+
         services.AddDbContext<AanDataContext>((serviceProvider, options) =>
         {
             SqlConnection connection = null!;
@@ -30,13 +34,13 @@ public static class AddAanDataContextExtension
             {
                 connection = new SqlConnection
                 {
-                    ConnectionString = connectionString,
+                    ConnectionString = sqlConnectionString,
                     AccessToken = AzureTokenProvider.GetToken(new TokenRequestContext(scopes: new string[] { AzureResource })).Token
                 };
             }
             else
             {
-                connection = new SqlConnection(connectionString);
+                connection = new SqlConnection(sqlConnectionString);
             }
 
             options.UseSqlServer(
