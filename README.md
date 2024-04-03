@@ -1,4 +1,4 @@
-## ⛔Never push sensitive information such as client id's, secrets or keys into repositories including in the README file⛔
+﻿## ⛔Never push sensitive information such as client id's, secrets or keys into repositories including in the README file⛔
 
 # AAN Hub Jobs
 
@@ -36,10 +36,12 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
     "ConfigNames": "SFA.DAS.AANHub.Jobs",
     "EnvironmentName": "LOCAL",
     "SendNotificationsFunctionSchedule": "0 */3 * * * *",
-    "MemberDataCleanupFunctionSchedule": "0 */3 * * * *"
+    "MemberDataCleanupFunctionSchedule": "0 */3 * * * *",
+    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 * * *"
   },
   "AzureWebJobs.SendNotificationsFunction.Disabled": "false",
-  "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false"
+  "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false",
+  "AzureWebJobs.SynchroniseApprenticeDetailsFunction.Disabled": "false"
 }
 ```
 When actively developing a function, it may be a good idea to disable other functions by adding `"AzureWebJobs.<function-name>.Disabled": "true"` to the local config, example seen above. 
