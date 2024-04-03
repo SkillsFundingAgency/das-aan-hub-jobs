@@ -1,6 +1,6 @@
 ﻿using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Data.Repositories;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 using System;
 using System.Linq;
 using System.Threading;
@@ -12,6 +12,7 @@ public interface IMemberDataCleanupService
 {
     Task<int> ProcessMemberDataCleanup(CancellationToken cancellationToken);
 }
+
 public class MemberDataCleanupService : IMemberDataCleanupService
 {
     private readonly IAanDataContext _aanDataContext;
