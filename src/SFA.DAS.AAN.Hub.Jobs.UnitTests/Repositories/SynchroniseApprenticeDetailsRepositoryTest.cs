@@ -4,15 +4,12 @@ using Moq;
 using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Repositories;
-using SFA.DAS.Testing.AutoFixture;
-using System.Threading;
 
 namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
 {
     public class SynchroniseApprenticeDetailsRepositoryTest
     {
         private readonly Mock<IAanDataContext> aanDataContextMock = null!;
-        private DbContextOptions<AanDataContext> _dbContextOptions;
         private CancellationToken cancellationToken = CancellationToken.None;
         private Fixture _fixture;
 
@@ -35,7 +32,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
                                     .CreateMany(1)
                                     .ToList();
 
-            _dbContextOptions = new DbContextOptionsBuilder<AanDataContext>()
+            var _dbContextOptions = new DbContextOptionsBuilder<AanDataContext>()
                 .UseInMemoryDatabase(databaseName: nameof(ThenUpdateMemberDetails))
                 .Options;
 
@@ -57,9 +54,12 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
             }
 
             Assert.That(updatedMember, Is.Not.Null);
-            Assert.That(updatedMember.FirstName, Is.EqualTo("test"));
-            Assert.That(updatedMember.LastName, Is.EqualTo("test"));
-            Assert.That(updatedMember.Email, Is.EqualTo("test"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(updatedMember.FirstName, Is.EqualTo("test"));
+                Assert.That(updatedMember.LastName, Is.EqualTo("test"));
+                Assert.That(updatedMember.Email, Is.EqualTo("test"));
+            });
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
                 StartTime = startTime
             };
 
-            _dbContextOptions = new DbContextOptionsBuilder<AanDataContext>()
+            var _dbContextOptions = new DbContextOptionsBuilder<AanDataContext>()
                 .UseInMemoryDatabase(databaseName: nameof(ThenUpdateMemberDetails))
                 .Options;
 
@@ -87,10 +87,13 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
                 jobAuditAdded = await context.JobAudits.FirstAsync(a => a.JobName == nameof(ThenAddJobAudit));
             }
 
-            Assert.That(jobAuditAdded, Is.Not.Null);
-            Assert.That(jobAuditAdded.StartTime, Is.EqualTo(startTime));
-            Assert.That(jobAuditAdded.EndTime, Is.AtLeast(startTime));
-            Assert.That(jobAuditAdded.Notes, Is.EqualTo("content"));
+            Assert.Multiple(() =>
+            {
+                Assert.That(jobAuditAdded, Is.Not.Null);
+                Assert.That(jobAuditAdded.StartTime, Is.EqualTo(startTime));
+                Assert.That(jobAuditAdded.EndTime, Is.AtLeast(startTime));
+                Assert.That(jobAuditAdded.Notes, Is.EqualTo("content"));
+            });
         }
     }
 }

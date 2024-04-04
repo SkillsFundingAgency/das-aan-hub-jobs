@@ -22,7 +22,6 @@ public interface ISynchroniseApprenticeDetailsService
 
 public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetailsService
 {
-    private readonly ILogger<SynchroniseApprenticeDetailsService> _logger;
     private readonly IApprenticeAccountsApiClient _apprenticeAccountsApiClient;
     private readonly IJobAuditRepository _jobAuditRepository;
     private readonly IMemberRepository _memberRepository;
@@ -30,7 +29,6 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
     private readonly ISynchroniseApprenticeDetailsRepository _synchroniseApprenticeDetailsRepository;
 
     public SynchroniseApprenticeDetailsService(
-        ILogger<SynchroniseApprenticeDetailsService> logger,
         IApprenticeAccountsApiClient apprenticeAccountsApiClient,
         IJobAuditRepository jobAuditRepository,
         IMemberRepository memberRepository,
@@ -38,7 +36,6 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         ISynchroniseApprenticeDetailsRepository synchroniseApprenticeDetailsRepository
     )
     {
-        _logger = logger;
         _apprenticeAccountsApiClient = apprenticeAccountsApiClient;
         _jobAuditRepository = jobAuditRepository;
         _memberRepository = memberRepository;
@@ -71,7 +68,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         if (!responseObject.Apprentices.Any())
             return await RecordAuditAndReturnDefault(audit, cancellationToken);
 
-        int updatedApprenticeCount = UpdateApprenticeDetails(members, responseObject, cancellationToken);
+        int updatedApprenticeCount = UpdateApprenticeDetails(members, responseObject);
 
         await _synchroniseApprenticeDetailsRepository.AddJobAudit(audit, response.StringContent, cancellationToken);
 
@@ -98,13 +95,13 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         );
     }
 
-    private int UpdateApprenticeDetails(List<Member> members, ApprenticeSyncResponseDto apprenticeSyncResponseDto, CancellationToken cancellationToken)
+    private int UpdateApprenticeDetails(List<Member> members, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
     {
         var apprentices = apprenticeSyncResponseDto.Apprentices;
 
         foreach (var member in members)
         { 
-            var apprentice = apprentices.FirstOrDefault(a => a.ApprenticeID == member.Apprentice.ApprenticeId);
+            var apprentice = Array.Find(apprentices, a => a.ApprenticeID == member.Apprentice.ApprenticeId);
 
             if (apprentice == null)
                 continue;

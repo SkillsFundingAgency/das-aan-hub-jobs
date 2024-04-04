@@ -53,7 +53,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
         }
 
         private static SynchroniseApprenticeDetailsService CreateService(
-            ILogger<SynchroniseApprenticeDetailsService> logger,
             IApprenticeAccountsApiClient apprenticeAccountsApiClientMock,
             IAanDataContext aanDataContext,
             IJobAuditRepository jobAuditRepository,
@@ -61,7 +60,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             ISynchroniseApprenticeDetailsRepository synchroniseApprenticeDetailsRepository
         )
         {
-            return new SynchroniseApprenticeDetailsService(logger, apprenticeAccountsApiClientMock, jobAuditRepository, memberRepository, aanDataContext, synchroniseApprenticeDetailsRepository);
+            return new SynchroniseApprenticeDetailsService(apprenticeAccountsApiClientMock, jobAuditRepository, memberRepository, aanDataContext, synchroniseApprenticeDetailsRepository);
         }
 
         [Test]
@@ -72,7 +71,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(new List<Member>());
 
             var sut = CreateService(
-                _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
                 _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
@@ -107,7 +105,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             )).ReturnsAsync(badResponse);
 
             var sut = CreateService(
-                _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
                 _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
@@ -146,7 +143,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             )).ReturnsAsync(emptyResponse).Verifiable();
 
             var sut = CreateService(
-                _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
                 _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
@@ -205,7 +201,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
                     It.IsAny<string>())).Verifiable();
 
             var sut = CreateService(
-                _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
                 _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
