@@ -53,9 +53,9 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         {
             var apprentices = await _apprenticeshipRespository.GetApprentices(cancellationToken);
 
-            if (apprentices is null || !apprentices.Any())
+            if (apprentices is null || apprentices.Count == 0)
             {
-                await RecordAudit(cancellationToken, audit, null);
+                await RecordAudit(audit, null, cancellationToken);
                 return default;
             }
 
@@ -63,28 +63,28 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
             if(response is null)
             {
-                await RecordAudit(cancellationToken, audit, null);
+                await RecordAudit(audit, null, cancellationToken);
                 return default;
             }
 
             var responseObject = response.GetContent();
 
-            if (!responseObject.Apprentices.Any())
+            if (responseObject.Apprentices.Count() == 0)
             {
-                await RecordAudit(cancellationToken, audit, null);
+                await RecordAudit(audit, null, cancellationToken);
                 return default;
             }
 
-            int updatedApprenticeCount = await UpdateApprenticeDetails(cancellationToken, responseObject);
+            int updatedApprenticeCount = await UpdateApprenticeDetails(responseObject, cancellationToken);
 
-            await RecordAudit(cancellationToken, audit, response);
+            await RecordAudit(audit, response, cancellationToken);
 
             return updatedApprenticeCount;
         }
         catch(Exception _exception)
         {
             _logger.LogError(_exception, "{MethodName} Failed.", nameof(SynchroniseApprentices));
-            await RecordAudit(cancellationToken, audit, null);
+            await RecordAudit(audit, null, cancellationToken);
             return default;
         }
     }
@@ -102,14 +102,14 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         );
     }
 
-    private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
+    private async Task<int> UpdateApprenticeDetails(ApprenticeSyncResponseDto apprenticeSyncResponseDto, CancellationToken cancellationToken)
     {
         var apprentices = await _apprenticeshipRespository.GetApprentices(
             apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray(),
             cancellationToken
         );
 
-        if (apprentices is null || !apprentices.Any())
+        if (apprentices is null || apprentices.Count == 0)
             return default;
 
         var memberIds = apprentices.Select(a => a.MemberId).ToArray();
@@ -118,12 +118,12 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
         foreach (var member in members)
         { 
-            var apprentice = apprentices.FirstOrDefault(a => a.MemberId == member.Id);
+            var apprentice = apprentices.Find(a => a.MemberId == member.Id);
 
             if (apprentice == null)
                 continue;
 
-            var apprenticeResponse = apprenticeSyncResponseDto.Apprentices.FirstOrDefault(a => a.ApprenticeID == apprentice.ApprenticeId);
+            var apprenticeResponse = Array.Find(apprenticeSyncResponseDto.Apprentices, a => a.ApprenticeID == apprentice.ApprenticeId);
 
             if (apprenticeResponse == null)
                 continue;
@@ -138,13 +138,13 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         return members.Count;
     }
 
-    private async Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit, Response<ApprenticeSyncResponseDto>? response)
+    private async Task RecordAudit(JobAudit jobAudit, Response<ApprenticeSyncResponseDto> response, CancellationToken cancellationToken)
     {
         try
         {
             jobAudit.EndTime = DateTime.UtcNow;
             jobAudit.Notes = response?.StringContent;
-            await _jobAuditRepository.RecordAudit(cancellationToken, jobAudit);
+            await _jobAuditRepository.RecordAudit(jobAudit, cancellationToken);
         }
         catch(Exception _exception)
         {

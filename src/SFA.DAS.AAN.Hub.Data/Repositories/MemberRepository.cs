@@ -20,7 +20,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
         {
             try
             {
-                if (ids == null || !ids.Any())
+                if (ids == null || ids.Length == 0)
                 {
                     throw new ArgumentException("ids array must not be null or empty.", nameof(ids));
                 }

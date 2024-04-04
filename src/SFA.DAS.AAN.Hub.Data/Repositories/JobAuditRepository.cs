@@ -33,7 +33,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             }
         }
 
-        public async Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit)
+        public async Task RecordAudit(JobAudit jobAudit, CancellationToken cancellationToken)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             }
             catch(Exception _exception)
             {
-                _logger.LogError(_exception, "Failed to record job audit: {JobAuditId}", jobAudit?.Id);
+                _logger.LogError(_exception, "Failed to record job audit: {JobAuditId}. Entity: {@JobAudit}", jobAudit?.Id, jobAudit);
                 throw;
             }
         }

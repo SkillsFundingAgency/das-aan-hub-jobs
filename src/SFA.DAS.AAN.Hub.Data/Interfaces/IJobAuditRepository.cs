@@ -6,6 +6,6 @@ namespace SFA.DAS.AAN.Hub.Data.Interfaces
     {
         Task<JobAudit?> GetMostRecentJobAudit(CancellationToken cancellationToken);
 
-        Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit);
+        Task RecordAudit(JobAudit jobAudit, CancellationToken cancellationToken);
     }
 }

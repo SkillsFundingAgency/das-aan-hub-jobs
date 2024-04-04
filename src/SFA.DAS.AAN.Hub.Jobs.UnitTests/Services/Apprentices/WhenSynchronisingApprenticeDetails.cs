@@ -50,7 +50,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             _loggerMock = new Mock<ILogger<SynchroniseApprenticeDetailsService>>();
         }
 
-        public SynchroniseApprenticeDetailsService CreateService(
+        private static SynchroniseApprenticeDetailsService CreateService(
             ILogger<SynchroniseApprenticeDetailsService> logger,
             IApprenticeAccountsApiClient apprenticeAccountsApiClientMock,
             IApprenticeRepository apprenticeshipRespository,
@@ -76,7 +76,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(_cancellationToken, It.IsAny<JobAudit>()), Times.Exactly(1));
+            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
 
             Assert.That(result, Is.EqualTo(0));
         }
@@ -98,7 +98,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(_cancellationToken, It.IsAny<JobAudit>()), Times.Exactly(1));
+            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
 
             Assert.That(result, Is.EqualTo(0));
         }
@@ -206,7 +206,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(_cancellationToken, It.IsAny<JobAudit>()), Times.Exactly(1));
+            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
 
             Assert.That(result, Is.EqualTo(0));
         }
@@ -239,7 +239,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(_cancellationToken, It.IsAny<JobAudit>()), Times.Exactly(1));
+            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
 
             Assert.That(result, Is.EqualTo(0));
         }

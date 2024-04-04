@@ -54,7 +54,7 @@ public class MemberRepositoryTests
         }
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result.Count, Is.EqualTo(3));
+        Assert.That(result, Has.Count.EqualTo(3));
     }
 
     [Test]
@@ -123,7 +123,7 @@ public class MemberRepositoryTests
         });
     }
 
-    private Mock<DbSet<T>> MockSet<T>() where T : class
+    private static Mock<DbSet<T>> MockSet<T>() where T : class
     {
         var members = new List<T>();
 

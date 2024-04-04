@@ -1,4 +1,5 @@
 ﻿using AutoFixture;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -64,7 +65,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
             }
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(3));
+            Assert.That(result, Has.Count.EqualTo(3));
         }
 
         [Test]
@@ -100,7 +101,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
             }
 
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(3));
+            Assert.That(result, Has.Count.EqualTo(3));
         }
 
         [Test]

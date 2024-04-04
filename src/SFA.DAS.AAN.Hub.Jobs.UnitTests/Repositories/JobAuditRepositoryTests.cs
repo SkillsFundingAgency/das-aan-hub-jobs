@@ -53,7 +53,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
             using (var context = new AanDataContext(_dbContextOptions))
             {
                 var sut = new JobAuditRepository(_logger.Object, context);
-                await sut.RecordAudit(cancellationToken, audit);
+                await sut.RecordAudit(audit, cancellationToken);
                 recordedAudit = context.JobAudits.FirstOrDefault(t => t.JobName == "RecordedAudit");
             }
 
