@@ -68,7 +68,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
         {
             SetupEmptyMocks();
 
-            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(new List<Member>());
+            _memberRepositoryMock.Setup(a => a.GetActiveApprenticeMembers(_cancellationToken)).ReturnsAsync(new List<Member>());
 
             var sut = CreateService(
                 _apprenticeAccountsApiClientMock.Object,
@@ -94,7 +94,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
         {
             SetupEmptyMocks();
 
-            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
+            _memberRepositoryMock.Setup(a => a.GetActiveApprenticeMembers(_cancellationToken)).ReturnsAsync(members);
 
             var apprenticeIds = members.Select(a => a.Apprentice == null ? new Guid() : a.Apprentice.ApprenticeId).ToArray();
 
@@ -131,7 +131,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             JobAudit? lastJobAudit = null;
 
-            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
+            _memberRepositoryMock.Setup(a => a.GetActiveApprenticeMembers(_cancellationToken)).ReturnsAsync(members);
 
             _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit("SynchroniseApprenticeDetailsService", _cancellationToken))
                 .ReturnsAsync(lastJobAudit);
@@ -167,7 +167,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             JobAudit? lastJobAudit = null;
 
-            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
+            _memberRepositoryMock.Setup(a => a.GetActiveApprenticeMembers(_cancellationToken)).ReturnsAsync(members);
 
             _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit("SynchroniseApprenticeDetailsService", _cancellationToken))
                 .ReturnsAsync(lastJobAudit);

@@ -20,10 +20,10 @@ public class MemberRepositoryTests
     }
 
     [Test]
-    public async Task ThenGetActiveMembers()
+    public async Task ThenGetActiveApprenticeMembers()
     {
         var _dbContextOptions = new DbContextOptionsBuilder<AanDataContext>()
-            .UseInMemoryDatabase(databaseName: $"{nameof(AanDataContext)}_ThenGetActiveMembers")
+            .UseInMemoryDatabase(databaseName: $"{nameof(AanDataContext)}_ThenGetActiveApprenticeMembers")
             .Options;
 
         var membersToAdd = _fixture.Build<Member>()
@@ -42,7 +42,7 @@ public class MemberRepositoryTests
             await context.SaveChangesAsync(cancellationToken);
 
             var sut = new MemberRepository(context);
-            result = await sut.GetActiveMembers(cancellationToken);
+            result = await sut.GetActiveApprenticeMembers(cancellationToken);
         }
 
         Assert.That(result, Is.Not.Null);
@@ -74,7 +74,7 @@ public class MemberRepositoryTests
             await context.SaveChangesAsync(cancellationToken);
 
             var sut = new MemberRepository(context);
-            result = await sut.GetActiveMembers(cancellationToken);
+            result = await sut.GetActiveApprenticeMembers(cancellationToken);
         }
 
         Assert.That(result, Is.Not.Null);

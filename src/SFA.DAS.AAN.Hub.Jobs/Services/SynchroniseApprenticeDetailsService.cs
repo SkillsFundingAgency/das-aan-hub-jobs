@@ -51,7 +51,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
             StartTime = DateTime.UtcNow
         };
 
-        var members = await _memberRepository.GetActiveMembers(cancellationToken);
+        var members = await _memberRepository.GetActiveApprenticeMembers(cancellationToken);
 
         if (members is null || members.Count == 0)
             return await RecordAuditAndReturnDefault(audit, cancellationToken);

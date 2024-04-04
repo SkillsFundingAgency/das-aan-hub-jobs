@@ -13,7 +13,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             _context = context;
         }
 
-        public async Task<List<Member>> GetActiveMembers(CancellationToken cancellationToken)
+        public async Task<List<Member>> GetActiveApprenticeMembers(CancellationToken cancellationToken)
         {
             return await _context.Members.Where(m => m.Email != m.Id.ToString())
                 .Include(a => a.Apprentice)
