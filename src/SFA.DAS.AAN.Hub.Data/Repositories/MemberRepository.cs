@@ -15,8 +15,11 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
 
         public async Task<List<Member>> GetActiveApprenticeMembers(CancellationToken cancellationToken)
         {
-            return await _context.Members.Where(m => m.Email != m.Id.ToString())
-                .Include(a => a.Apprentice)
+            return await _context.Members.Where(m => 
+                   m.Email != m.Id.ToString() &&
+                   m.UserType == UserType.Apprentice
+            )
+            .Include(a => a.Apprentice)
             .ToListAsync(cancellationToken);
         }
     }

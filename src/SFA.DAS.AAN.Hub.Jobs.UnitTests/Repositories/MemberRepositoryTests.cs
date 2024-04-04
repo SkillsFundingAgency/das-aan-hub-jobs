@@ -45,8 +45,10 @@ public class MemberRepositoryTests
             result = await sut.GetActiveApprenticeMembers(cancellationToken);
         }
 
+        var apprenticeCount = membersToAdd.Where(a => a.UserType == UserType.Apprentice).Count();
+
         Assert.That(result, Is.Not.Null);
-        Assert.That(result, Has.Count.EqualTo(3));
+        Assert.That(result, Has.Count.EqualTo(apprenticeCount));
     }
 
     [Test]
@@ -57,6 +59,7 @@ public class MemberRepositoryTests
             .Options;
 
         var membersToAdd = _fixture.Build<Member>()
+                                        .With(m => m.UserType, UserType.Apprentice)
                                         .Without(m => m.MemberPreferences)
                                         .Without(m => m.Audits)
                                         .Without(m => m.Notifications)
