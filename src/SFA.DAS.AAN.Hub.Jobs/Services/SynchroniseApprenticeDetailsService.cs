@@ -119,10 +119,12 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
                 apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray()
             );
 
-            if (!apprentices.Any())
+            if (apprentices is null || !apprentices.Any())
                 return default;
 
-            var members = await _memberRepository.GetMembers(cancellationToken, apprentices.Select(a => a.MemberId).ToArray());
+            var memberIds = apprentices.Select(a => a.MemberId).ToArray();
+
+            var members = await _memberRepository.GetMembers(cancellationToken, memberIds);
 
             foreach (var member in members)
             { 
