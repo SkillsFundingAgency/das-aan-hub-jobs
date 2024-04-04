@@ -9,7 +9,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
 {
     public class SynchroniseApprenticeDetailsRepositoryTest
     {
-        private readonly Mock<IAanDataContext> aanDataContextMock = null!;
         private CancellationToken cancellationToken = CancellationToken.None;
         private Fixture _fixture;
 
