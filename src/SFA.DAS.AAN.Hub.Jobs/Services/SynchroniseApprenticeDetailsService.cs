@@ -59,7 +59,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
                 return default;
             }
 
-            var response = await QueryApprenticeApi(cancellationToken, apprentices);
+            var response = await QueryApprenticeApi(apprentices, cancellationToken);
 
             if(response is null)
             {
@@ -69,7 +69,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
             var responseObject = response.GetContent();
 
-            if (responseObject.Apprentices.Count() == 0)
+            if (!responseObject.Apprentices.Any())
             {
                 await RecordAudit(audit, null, cancellationToken);
                 return default;
@@ -89,7 +89,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         }
     }
 
-    private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(CancellationToken cancellationToken, List<Apprentice> apprentices)
+    private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(List<Apprentice> apprentices, CancellationToken cancellationToken)
     {
         var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(cancellationToken);
 
