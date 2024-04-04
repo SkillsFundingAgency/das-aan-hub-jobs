@@ -28,8 +28,5 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
             services.AddRestEaseClient<IApprenticeAccountsApiClient>(apiConfig.Url)
                 .AddHttpMessageHandler(() => new InnerApiAuthenticationHeaderHandler(new AzureClientCredentialHelper(), apiConfig.Identifier));
         }
-
-        private static ApprenticeAccountsApiConfiguration GetApiConfiguration(IConfiguration configuration, string configurationName)
-            => configuration.GetSection(configurationName).Get<ApprenticeAccountsApiConfiguration>();
     }
 }
