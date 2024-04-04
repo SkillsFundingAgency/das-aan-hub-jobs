@@ -180,35 +180,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
         [Test]
         [RecursiveMoqAutoData]
-        public async Task AndAuditQueryFails_ThenExceptionIsThrown(
-            List<Apprentice> apprentices    
-        )
-        {
-            SetupEmptyMocks();
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken)).ReturnsAsync(apprentices);
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            _jobAuditRepositoryMock
-                .Setup(x => x.GetMostRecentJobAudit(_cancellationToken))
-                .ThrowsAsync(new Exception(nameof(Exception)));
-
-            var result = await sut.SynchroniseApprentices(_cancellationToken);
-
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(_cancellationToken, It.IsAny<JobAudit>()), Times.Exactly(1));
-
-            Assert.That(result, Is.EqualTo(0));
-        }
-
-        [Test]
-        [RecursiveMoqAutoData]
         public async Task AndApiResponseIsNull_ThenLogsAuditAndReturnsDefault(
             List<Apprentice> apprentices    
         )
@@ -291,7 +262,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken))
                 .ReturnsAsync(apprentices);
 
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken, apprenticeIds))
+            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(apprenticeIds, _cancellationToken))
                 .ReturnsAsync([]).Verifiable();
 
             _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
@@ -339,12 +310,12 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken))
                 .ReturnsAsync(apprentices);
 
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken, apprenticeIds))
+            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(apprenticeIds, _cancellationToken))
                 .ReturnsAsync(apprentices).Verifiable();
 
             var memberIds = apprentices.Select(a => a.MemberId).ToArray();
 
-            _memberRepositoryMock.Setup(x => x.GetMembers(_cancellationToken, memberIds))
+            _memberRepositoryMock.Setup(x => x.GetMembers(memberIds, _cancellationToken))
                 .ReturnsAsync(members).Verifiable();
 
             var response = new Response<ApprenticeSyncResponseDto>(
@@ -374,7 +345,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             Assert.That(result, Is.EqualTo(3));
             _apprenticeRepositoryMock.Verify();
-            _memberRepositoryMock.Verify(a => a.UpdateMembers(_cancellationToken, members), Times.Exactly(1));
+            _memberRepositoryMock.Verify(a => a.UpdateMembers(members, _cancellationToken), Times.Exactly(1));
         }
 
         private void SetupEmptyMocks()

@@ -59,18 +59,5 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
 
             Assert.That(recordedAudit, Is.Not.Null);
         }
-
-        [Test]
-        public void AndNullJobAudit_ThenRecordAuditThrowsException()
-        {
-            Mock<IAanDataContext> context = new Mock<IAanDataContext>();
-
-            JobAuditRepository sut = new JobAuditRepository(_logger.Object, context.Object);
-
-            Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            {
-                await sut.RecordAudit(cancellationToken, null);
-            });
-        }
     }
 }

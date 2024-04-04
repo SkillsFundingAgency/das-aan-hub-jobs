@@ -6,6 +6,6 @@ namespace SFA.DAS.AAN.Hub.Data.Interfaces
     {
         Task<List<Apprentice>> GetApprentices(CancellationToken cancellationToken);
 
-        Task<List<Apprentice>> GetApprentices(CancellationToken cancellationToken, Guid[] ids);
+        Task<List<Apprentice>> GetApprentices(Guid[] ids, CancellationToken cancellationToken);
     }
 }

@@ -8,7 +8,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
 {
     public class SynchroniseApprenticeDetailsFunction
     {
-        private ILogger<SynchroniseApprenticeDetailsFunction> _logger;
+        private readonly ILogger<SynchroniseApprenticeDetailsFunction> _logger;
 
         private readonly ISynchroniseApprenticeDetailsService _synchroniseApprenticeDetailsService;
 

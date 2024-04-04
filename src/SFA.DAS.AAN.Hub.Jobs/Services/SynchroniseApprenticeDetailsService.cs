@@ -91,71 +91,51 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 
     private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(CancellationToken cancellationToken, List<Apprentice> apprentices)
     {
-        try
-        {
-            var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(cancellationToken);
+        var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(cancellationToken);
 
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
+        var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
 
-            return await _apprenticeAccountsApiClient.SynchroniseApprentices(
-                apprenticeIds,
-                lastJobAudit?.StartTime, 
-                cancellationToken
-            );
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Failed to query apprentice API.");
-            throw;
-        }
+        return await _apprenticeAccountsApiClient.SynchroniseApprentices(
+            apprenticeIds,
+            lastJobAudit?.StartTime, 
+            cancellationToken
+        );
     }
 
     private async Task<int> UpdateApprenticeDetails(CancellationToken cancellationToken, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
     {
-        try
-        {
-            var apprentices = await _apprenticeshipRespository.GetApprentices(
-                cancellationToken, 
-                apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray()
-            );
+        var apprentices = await _apprenticeshipRespository.GetApprentices(
+            apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray(),
+            cancellationToken
+        );
 
-            if (apprentices is null || !apprentices.Any())
-                return default;
+        if (apprentices is null || !apprentices.Any())
+            return default;
 
-            var memberIds = apprentices.Select(a => a.MemberId).ToArray();
+        var memberIds = apprentices.Select(a => a.MemberId).ToArray();
 
-            var members = await _memberRepository.GetMembers(cancellationToken, memberIds);
+        var members = await _memberRepository.GetMembers(memberIds, cancellationToken);
 
-            foreach (var member in members)
-            { 
-                var apprentice = apprentices.FirstOrDefault(a => a.MemberId == member.Id);
+        foreach (var member in members)
+        { 
+            var apprentice = apprentices.FirstOrDefault(a => a.MemberId == member.Id);
 
-                if (apprentice == null)
-                    continue;
+            if (apprentice == null)
+                continue;
 
-                var apprenticeResponse = apprenticeSyncResponseDto.Apprentices.FirstOrDefault(a => a.ApprenticeID == apprentice.ApprenticeId);
+            var apprenticeResponse = apprenticeSyncResponseDto.Apprentices.FirstOrDefault(a => a.ApprenticeID == apprentice.ApprenticeId);
 
-                if (apprenticeResponse != null)
-                {
-                    member.FirstName = apprenticeResponse.FirstName;
-                    member.LastName = apprenticeResponse.LastName;
-                    member.Email = apprenticeResponse.Email;
-                }
-                else
-                {
-                    _logger.LogWarning("Apprentice with ID {ApprenticeId} not found in the database.", apprenticeResponse.ApprenticeID.ToString());
-                }
-            }
+            if (apprenticeResponse == null)
+                continue;
 
-            await _memberRepository.UpdateMembers(cancellationToken, members);
-
-            return members.Count;
+            member.FirstName = apprenticeResponse.FirstName;
+            member.LastName = apprenticeResponse.LastName;
+            member.Email = apprenticeResponse.Email;
         }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Failed to update apprentice details.");
-            throw;
-        }
+
+        await _memberRepository.UpdateMembers(members, cancellationToken);
+
+        return members.Count;
     }
 
     private async Task RecordAudit(CancellationToken cancellationToken, JobAudit jobAudit, Response<ApprenticeSyncResponseDto>? response)

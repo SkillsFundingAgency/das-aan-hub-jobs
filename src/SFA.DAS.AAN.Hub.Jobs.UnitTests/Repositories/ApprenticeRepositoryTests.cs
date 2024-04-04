@@ -106,21 +106,19 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
         [Test]
         public async Task AndEmptyArguements_ThenGetApprenticesReturnsEmpty()
         {
-            ApprenticeRepository sut = new ApprenticeRepository(_logger.Object, null);
-
+            var mockContext = new Mock<IAanDataContext>();
+            ApprenticeRepository sut = new ApprenticeRepository(_logger.Object, mockContext.Object);
             var result = await sut.GetApprentices(cancellationToken);
-
             Assert.That(result, Is.Empty);
         }
 
         [Test]
         public async Task AndEmptyArguements_ThenGetApprenticesByIdReturnsEmpty()
         {
-            ApprenticeRepository sut = new ApprenticeRepository(_logger.Object, null);
-
+            var mockContext = new Mock<IAanDataContext>();
+            ApprenticeRepository sut = new ApprenticeRepository(_logger.Object, mockContext.Object);
             var result = await sut.GetApprentices(cancellationToken, []);
-
-            Assert.That(result, Is.Empty);
+            Assert.That(result, Is.Empty);   
         }
     }
 }

@@ -4,7 +4,7 @@ namespace SFA.DAS.AAN.Hub.Data.Interfaces
 {
     public interface IMemberRepository
     {
-        Task<List<Member>> GetMembers(CancellationToken cancellationToken, Guid[] ids);
-        Task UpdateMembers(CancellationToken cancellationToken, List<Member> members);
+        Task<List<Member>> GetMembers(Guid[] ids, CancellationToken cancellationToken);
+        Task UpdateMembers(List<Member> members, CancellationToken cancellationToken);
     }
 }

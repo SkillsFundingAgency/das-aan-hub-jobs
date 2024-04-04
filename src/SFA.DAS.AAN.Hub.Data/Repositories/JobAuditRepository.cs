@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
+using System;
 
 namespace SFA.DAS.AAN.Hub.Data.Repositories
 {
@@ -36,17 +37,12 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
         {
             try
             {
-                if(jobAudit == null)
-                {
-                    throw new ArgumentNullException("Job audit entity must not be null");
-                }
-
                 _context.JobAudits.Add(jobAudit);
                 await _context.SaveChangesAsync(cancellationToken);
             }
             catch(Exception _exception)
             {
-                _logger.LogError(_exception, "Unable to record job audit.");
+                _logger.LogError(_exception, "Failed to record job audit: {JobAuditId}", jobAudit?.Id);
                 throw;
             }
         }

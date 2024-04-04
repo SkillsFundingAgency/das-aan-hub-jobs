@@ -16,13 +16,13 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             _context = context;
         }
 
-        public async Task<List<Member>> GetMembers(CancellationToken cancellationToken, Guid[] ids)
+        public async Task<List<Member>> GetMembers(Guid[] ids, CancellationToken cancellationToken)
         {
             try
             {
                 if (ids == null || !ids.Any())
                 {
-                    throw new ArgumentException("ids array must not be null or empty.");
+                    throw new ArgumentException("ids array must not be null or empty.", nameof(ids));
                 }
 
                 return await _context.Members.Where(a => ids.Contains(a.Id)).ToListAsync(cancellationToken);
@@ -34,7 +34,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             }
         }
 
-        public async Task UpdateMembers(CancellationToken cancellationToken, List<Member> members)
+        public async Task UpdateMembers(List<Member> members, CancellationToken cancellationToken)
         {
             try
             {
