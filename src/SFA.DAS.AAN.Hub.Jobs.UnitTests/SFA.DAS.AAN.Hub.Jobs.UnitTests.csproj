@@ -34,7 +34,4 @@
   <ItemGroup>
     <ProjectReference Include="..\SFA.DAS.AAN.Hub.Jobs\SFA.DAS.AAN.Hub.Jobs.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Api\" />
-  </ItemGroup>
 </Project>

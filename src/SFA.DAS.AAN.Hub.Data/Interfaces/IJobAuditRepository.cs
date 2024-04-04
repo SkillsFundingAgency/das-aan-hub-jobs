@@ -4,8 +4,6 @@ namespace SFA.DAS.AAN.Hub.Data.Interfaces
 {
     public interface IJobAuditRepository
     {
-        Task<JobAudit?> GetMostRecentJobAudit(CancellationToken cancellationToken);
-
-        Task RecordAudit(JobAudit jobAudit, CancellationToken cancellationToken);
+        Task<JobAudit?> GetMostRecentJobAudit(string jobName, CancellationToken cancellationToken);
     }
 }

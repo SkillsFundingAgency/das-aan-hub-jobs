@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestEase;
+using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Data.Repositories;
@@ -16,11 +17,12 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 {
     public class WhenSynchronisingApprenticeDetails
     {
-        private Mock<IApprenticeRepository> _apprenticeRepositoryMock = null!;
         private Mock<IJobAuditRepository> _jobAuditRepositoryMock = null!;
         private Mock<IMemberRepository> _memberRepositoryMock = null!;
         private Mock<IApprenticeAccountsApiClient> _apprenticeAccountsApiClientMock = null!;
         private Mock<ILogger<SynchroniseApprenticeDetailsService>> _loggerMock = new();
+        private Mock<IAanDataContext> _aanDataContextMock = null!;
+        private Mock<ISynchroniseApprenticeDetailsRepository> _synchroniseApprenticeDetailsRepository = null!;
         private CancellationToken _cancellationToken;
 
         private Response<ApprenticeSyncResponseDto> emptyResponse = 
@@ -30,14 +32,14 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
                 () => new ApprenticeSyncResponseDto() { Apprentices = [] }
         );
 
-        private Response<ApprenticeSyncResponseDto> populatedResponse =
+        private Response<ApprenticeSyncResponseDto> badResponse =
             new Response<ApprenticeSyncResponseDto>(
                 "{ \"apprentices\":[]}",
-                new HttpResponseMessage(HttpStatusCode.OK),
-                () => new ApprenticeSyncResponseDto() { Apprentices = [
-                    new ApprenticeSyncDto() { ApprenticeID = Guid.NewGuid() }    
-                ] 
-            }
+                new HttpResponseMessage(HttpStatusCode.BadRequest),
+                () => new ApprenticeSyncResponseDto()
+                {
+                    Apprentices = []
+                }
         );
 
         [SetUp]
@@ -53,193 +55,35 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
         private static SynchroniseApprenticeDetailsService CreateService(
             ILogger<SynchroniseApprenticeDetailsService> logger,
             IApprenticeAccountsApiClient apprenticeAccountsApiClientMock,
-            IApprenticeRepository apprenticeshipRespository,
+            IAanDataContext aanDataContext,
             IJobAuditRepository jobAuditRepository,
-            IMemberRepository memberRepository
+            IMemberRepository memberRepository,
+            ISynchroniseApprenticeDetailsRepository synchroniseApprenticeDetailsRepository
         )
         {
-            return new SynchroniseApprenticeDetailsService(logger, apprenticeAccountsApiClientMock, apprenticeshipRespository, jobAuditRepository, memberRepository);
+            return new SynchroniseApprenticeDetailsService(logger, apprenticeAccountsApiClientMock, jobAuditRepository, memberRepository, aanDataContext, synchroniseApprenticeDetailsRepository);
         }
 
         [Test]
-        public async Task AndApprenticesNull_ThenLogsAuditAndReturnsDefault()
+        public async Task AndMembersEmpty_ThenLogsAuditAndReturnsDefault()
         {
             SetupEmptyMocks();
+
+            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(new List<Member>());
 
             var sut = CreateService(
                 _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
+                _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
+                _memberRepositoryMock.Object,
+                _synchroniseApprenticeDetailsRepository.Object
             );
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
-
-            Assert.That(result, Is.EqualTo(0));
-        }
-
-        [Test]
-        public async Task AndApprenticesEmpty_ThenLogsAuditAndReturnsDefault()
-        {
-            SetupEmptyMocks();
-
-            _apprenticeRepositoryMock.Setup(a => a.GetApprentices(_cancellationToken)).ReturnsAsync(new List<Apprentice>());
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            var result = await sut.SynchroniseApprentices(_cancellationToken);
-
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
-
-            Assert.That(result, Is.EqualTo(0));
-        }
-
-        [Test]
-        [RecursiveMoqAutoData]
-        public async Task AndLastJobAuditNull_ThenTheRequestForApprenticesContainsNoDate(
-            List<Apprentice> apprentices
-        )
-        {
-            SetupEmptyMocks();
-
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
-
-            JobAudit? lastJobAudit = null;
-
-            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit(_cancellationToken))
-                .ReturnsAsync(lastJobAudit);
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken))
-                .ReturnsAsync(apprentices);
-
-            _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
-                apprenticeIds,
-                null,
-                _cancellationToken
-            )).ReturnsAsync(emptyResponse).Verifiable();
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            await sut.SynchroniseApprentices(_cancellationToken);
-
-            _apprenticeAccountsApiClientMock.VerifyAll();
-        }
-
-        [Test]
-        [RecursiveMoqAutoData]
-        public async Task AndLastJobAuditNotNull_ThenTheRequestForApprenticesContainsTheDate(
-            List<Apprentice> apprentices    
-        )
-        {
-            SetupEmptyMocks();
-
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
-
-            var lastJobAudit = new JobAudit()
-            {
-                JobName = nameof(SynchroniseApprenticeDetailsFunction),
-                StartTime = DateTime.UtcNow.AddDays(-1)
-            };
-
-            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit(_cancellationToken)).ReturnsAsync(lastJobAudit);
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken)).ReturnsAsync(apprentices);
-
-            _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
-                apprenticeIds,
-                lastJobAudit.StartTime,
-                _cancellationToken
-            )).ReturnsAsync(emptyResponse).Verifiable();
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            await sut.SynchroniseApprentices(_cancellationToken);
-
-            _apprenticeAccountsApiClientMock.VerifyAll();
-        }
-
-        [Test]
-        [RecursiveMoqAutoData]
-        public async Task AndApiResponseIsNull_ThenLogsAuditAndReturnsDefault(
-            List<Apprentice> apprentices    
-        )
-        {
-            SetupEmptyMocks();
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken)).ReturnsAsync(apprentices);
-
-            Response<ApprenticeSyncResponseDto>? response = null;
-
-            _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
-                It.IsAny<Guid[]>(),
-                It.IsAny<DateTime>(),
-                It.IsAny<CancellationToken>()
-            )).ReturnsAsync(response);
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            var result = await sut.SynchroniseApprentices(_cancellationToken);
-
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
-
-            Assert.That(result, Is.EqualTo(0));
-        }
-
-        [Test]
-        [RecursiveMoqAutoData]
-        public async Task AndApiResponseIsEmpty_ThenLogsAuditAndReturnsDefault(
-            List<Apprentice> apprentices
-        )
-        {
-            SetupEmptyMocks();
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken)).ReturnsAsync(apprentices);
-
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
-
-            _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
-                apprenticeIds,
-                null,
-                _cancellationToken
-            )).ReturnsAsync(emptyResponse);
-
-            var sut = CreateService(
-                _loggerMock.Object,
-                _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
-                _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
-            );
-
-            var result = await sut.SynchroniseApprentices(_cancellationToken);
-
-            _jobAuditRepositoryMock.Verify(x => x.RecordAudit(It.IsAny<JobAudit>(), _cancellationToken), Times.Exactly(1));
+            _synchroniseApprenticeDetailsRepository.Verify(x => 
+                x.AddJobAudit(It.IsAny<JobAudit>(), It.IsAny<string>(), _cancellationToken), Times.Exactly(1));
 
             Assert.That(result, Is.EqualTo(0));
         }
@@ -247,36 +91,28 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
         [Test]
         [RecursiveMoqAutoData]
         public async Task AndGetApprenticesByIdReturnsEmpty_ThenLogsAuditAndReturnsDefault(
-            List<Apprentice> apprentices
+            List<Member> members
         )
         {
             SetupEmptyMocks();
 
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
+            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
 
-            JobAudit? lastJobAudit = null;
-
-            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit(_cancellationToken))
-                .ReturnsAsync(lastJobAudit);
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken))
-                .ReturnsAsync(apprentices);
-
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(apprenticeIds, _cancellationToken))
-                .ReturnsAsync([]).Verifiable();
+            var apprenticeIds = members.Select(a => a.Apprentice == null ? new Guid() : a.Apprentice.ApprenticeId).ToArray();
 
             _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
                 apprenticeIds,
                 null,
                 _cancellationToken
-            )).ReturnsAsync(populatedResponse);
+            )).ReturnsAsync(badResponse);
 
             var sut = CreateService(
                 _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
+                _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
+                _memberRepositoryMock.Object,
+                _synchroniseApprenticeDetailsRepository.Object
             );
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
@@ -288,42 +124,71 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
         [Test]
         [RecursiveMoqAutoData]
-        public async Task AndResponseReturnsApprentices_ThenApprenticeDetailsAreUpdated(
-            List<Apprentice> apprentices,
+        public async Task AndLastJobAuditNull_ThenTheRequestForApprenticesContainsNoDate(
             List<Member> members
         )
         {
-            for(int i = 0; i < apprentices.Count; i++)
-            {
-                apprentices[i].MemberId = members[i].Id; 
-            }
-
             SetupEmptyMocks();
 
-            var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
+            var apprenticeIds = members.Select(a => a.Apprentice == null ? new Guid() : a.Apprentice.ApprenticeId).ToArray();
 
             JobAudit? lastJobAudit = null;
 
-            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit(_cancellationToken))
+            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
+
+            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit("SynchroniseApprenticeDetailsService", _cancellationToken))
                 .ReturnsAsync(lastJobAudit);
 
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(_cancellationToken))
-                .ReturnsAsync(apprentices);
+            _apprenticeAccountsApiClientMock.Setup(x => x.SynchroniseApprentices(
+                apprenticeIds,
+                null,
+                _cancellationToken
+            )).ReturnsAsync(emptyResponse).Verifiable();
 
-            _apprenticeRepositoryMock.Setup(x => x.GetApprentices(apprenticeIds, _cancellationToken))
-                .ReturnsAsync(apprentices).Verifiable();
+            var sut = CreateService(
+                _loggerMock.Object,
+                _apprenticeAccountsApiClientMock.Object,
+                _aanDataContextMock.Object,
+                _jobAuditRepositoryMock.Object,
+                _memberRepositoryMock.Object,
+                _synchroniseApprenticeDetailsRepository.Object
+            );
 
-            var memberIds = apprentices.Select(a => a.MemberId).ToArray();
+            await sut.SynchroniseApprentices(_cancellationToken);
 
-            _memberRepositoryMock.Setup(x => x.GetMembers(memberIds, _cancellationToken))
-                .ReturnsAsync(members).Verifiable();
+            _apprenticeAccountsApiClientMock.VerifyAll();
+        }
+
+        [Test]
+        [RecursiveMoqAutoData]
+        public async Task AndApprenticeSyncDtosReturned_ThenMembersAreUpdated(
+            List<Member> members
+        )
+        {
+            SetupEmptyMocks();
+
+            var apprenticeIds = members.Select(a => a.Apprentice == null ? new Guid() : a.Apprentice.ApprenticeId).ToArray();
+
+            JobAudit? lastJobAudit = null;
+
+            _memberRepositoryMock.Setup(a => a.GetActiveMembers(_cancellationToken)).ReturnsAsync(members);
+
+            _jobAuditRepositoryMock.Setup(x => x.GetMostRecentJobAudit("SynchroniseApprenticeDetailsService", _cancellationToken))
+                .ReturnsAsync(lastJobAudit);
 
             var response = new Response<ApprenticeSyncResponseDto>(
                 "{ \"apprentices\":[]}",
                 new HttpResponseMessage(HttpStatusCode.OK),
                 () => new ApprenticeSyncResponseDto()
                 {
-                    Apprentices = apprentices.Select(a => new ApprenticeSyncDto() { ApprenticeID = a.ApprenticeId }).ToArray()    
+                    Apprentices = members.Select(a => 
+                        new ApprenticeSyncDto() { 
+                            ApprenticeID = a.Apprentice?.ApprenticeId ?? Guid.NewGuid(),
+                            FirstName = a.FirstName,
+                            LastName = a.LastName,
+                            Email = a.Email
+                        }
+                    ).ToArray()
                 }
             );
 
@@ -331,36 +196,52 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
                 apprenticeIds,
                 null,
                 _cancellationToken
-            )).ReturnsAsync(response);
+            )).ReturnsAsync(response).Verifiable();
+
+            _synchroniseApprenticeDetailsRepository.Setup(a =>
+                a.UpdateMemberDetails(It.IsAny<Member>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>())).Verifiable();
 
             var sut = CreateService(
                 _loggerMock.Object,
                 _apprenticeAccountsApiClientMock.Object,
-                _apprenticeRepositoryMock.Object,
+                _aanDataContextMock.Object,
                 _jobAuditRepositoryMock.Object,
-                _memberRepositoryMock.Object
+                _memberRepositoryMock.Object,
+                _synchroniseApprenticeDetailsRepository.Object
             );
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
+            _synchroniseApprenticeDetailsRepository.Verify(a => 
+                a.UpdateMemberDetails(
+                    It.IsAny<Member>(), 
+                    It.IsAny<string>(), 
+                    It.IsAny<string>(), 
+                    It.IsAny<string>()
+                    ), 
+                Times.Exactly(3)
+            );
+
             Assert.That(result, Is.EqualTo(3));
-            _apprenticeRepositoryMock.Verify();
-            _memberRepositoryMock.Verify(a => a.UpdateMembers(members, _cancellationToken), Times.Exactly(1));
         }
 
         private void SetupEmptyMocks()
         {
-            _apprenticeRepositoryMock = new Mock<IApprenticeRepository>();
             _jobAuditRepositoryMock = new Mock<IJobAuditRepository>();
             _memberRepositoryMock = new Mock<IMemberRepository>();
             _apprenticeAccountsApiClientMock = new Mock<IApprenticeAccountsApiClient>();
+            _synchroniseApprenticeDetailsRepository = new Mock<ISynchroniseApprenticeDetailsRepository>();
+            _aanDataContextMock = new Mock<IAanDataContext>();
         }
 
         [OneTimeTearDown]
         public void CleanUp()
         {
             emptyResponse.Dispose();
-            populatedResponse.Dispose();
+            badResponse.Dispose();
         }
     }
 }

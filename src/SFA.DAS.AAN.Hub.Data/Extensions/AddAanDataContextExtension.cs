@@ -52,7 +52,7 @@ public static class AddAanDataContextExtension
         services.AddScoped<IAanDataContext, AanDataContext>(provider => provider.GetService<AanDataContext>()!);
         services.AddScoped<INotificationsRepository, NotificationsRepository>();
         services.AddScoped<IMemberDataCleanupRepository, MemberDataCleanupRepository>();
-        services.AddScoped<IApprenticeRepository, ApprenticeRepository>();
+        services.AddScoped<ISynchroniseApprenticeDetailsRepository, SynchroniseApprenticeDetailsRepository>();
         services.AddScoped<IJobAuditRepository, JobAuditRepository>();
         services.AddScoped<IMemberRepository, MemberRepository>();
         return services;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using RestEase;
+using SFA.DAS.AAN.Hub.Data;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
@@ -8,6 +9,7 @@ using SFA.DAS.AAN.Hub.Jobs.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,23 +24,26 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
 {
     private readonly ILogger<SynchroniseApprenticeDetailsService> _logger;
     private readonly IApprenticeAccountsApiClient _apprenticeAccountsApiClient;
-    private readonly IApprenticeRepository _apprenticeshipRespository;
     private readonly IJobAuditRepository _jobAuditRepository;
     private readonly IMemberRepository _memberRepository;
+    private readonly IAanDataContext _aanDataContext;
+    private readonly ISynchroniseApprenticeDetailsRepository _synchroniseApprenticeDetailsRepository;
 
     public SynchroniseApprenticeDetailsService(
         ILogger<SynchroniseApprenticeDetailsService> logger,
         IApprenticeAccountsApiClient apprenticeAccountsApiClient,
-        IApprenticeRepository apprenticeshipRespository,
         IJobAuditRepository jobAuditRepository,
-        IMemberRepository memberRepository
+        IMemberRepository memberRepository,
+        IAanDataContext aanDataContext,
+        ISynchroniseApprenticeDetailsRepository synchroniseApprenticeDetailsRepository
     )
     {
         _logger = logger;
         _apprenticeAccountsApiClient = apprenticeAccountsApiClient;
-        _apprenticeshipRespository = apprenticeshipRespository;
         _jobAuditRepository = jobAuditRepository;
         _memberRepository = memberRepository;
+        _aanDataContext = aanDataContext;
+        _synchroniseApprenticeDetailsRepository = synchroniseApprenticeDetailsRepository;
     }
 
     public async Task<int> SynchroniseApprentices(CancellationToken cancellationToken)
@@ -49,51 +54,42 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
             StartTime = DateTime.UtcNow
         };
 
-        try
-        {
-            var apprentices = await _apprenticeshipRespository.GetApprentices(cancellationToken);
+        var members = await _memberRepository.GetActiveMembers(cancellationToken);
 
-            if (apprentices is null || apprentices.Count == 0)
-            {
-                await RecordAudit(audit, null, cancellationToken);
-                return default;
-            }
+        if (members is null || members.Count == 0)
+            return await RecordAuditAndReturnDefault(audit, cancellationToken);
 
-            var response = await QueryApprenticeApi(apprentices, cancellationToken);
+        var apprenticeIds = members.Select(a => a.Apprentice.ApprenticeId).ToArray();
 
-            if(response is null)
-            {
-                await RecordAudit(audit, null, cancellationToken);
-                return default;
-            }
+        var response = await QueryApprenticeApi(apprenticeIds, cancellationToken);
 
-            var responseObject = response.GetContent();
-
-            if (!responseObject.Apprentices.Any())
-            {
-                await RecordAudit(audit, null, cancellationToken);
-                return default;
-            }
-
-            int updatedApprenticeCount = await UpdateApprenticeDetails(responseObject, cancellationToken);
-
-            await RecordAudit(audit, response, cancellationToken);
-
-            return updatedApprenticeCount;
-        }
-        catch(Exception _exception)
-        {
-            _logger.LogError(_exception, "{MethodName} Failed.", nameof(SynchroniseApprentices));
-            await RecordAudit(audit, null, cancellationToken);
+        if(response.ResponseMessage.StatusCode != HttpStatusCode.OK)
             return default;
-        }
+
+        var responseObject = response.GetContent();
+
+        if (!responseObject.Apprentices.Any())
+            return await RecordAuditAndReturnDefault(audit, cancellationToken);
+
+        int updatedApprenticeCount = UpdateApprenticeDetails(members, responseObject, cancellationToken);
+
+        await _synchroniseApprenticeDetailsRepository.AddJobAudit(audit, response.StringContent, cancellationToken);
+
+        await _aanDataContext.SaveChangesAsync(cancellationToken);
+
+        return updatedApprenticeCount;
     }
 
-    private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(List<Apprentice> apprentices, CancellationToken cancellationToken)
+    private async Task<int> RecordAuditAndReturnDefault(JobAudit audit, CancellationToken cancellationToken)
     {
-        var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(cancellationToken);
+        await _synchroniseApprenticeDetailsRepository.AddJobAudit(audit, null, cancellationToken);
+        await _aanDataContext.SaveChangesAsync(cancellationToken);
+        return default;
+    }
 
-        var apprenticeIds = apprentices.Select(a => a.ApprenticeId).ToArray();
+    private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(Guid[] apprenticeIds, CancellationToken cancellationToken)
+    {
+        var lastJobAudit = await _jobAuditRepository.GetMostRecentJobAudit(nameof(SynchroniseApprenticeDetailsFunction), cancellationToken);
 
         return await _apprenticeAccountsApiClient.SynchroniseApprentices(
             apprenticeIds,
@@ -102,53 +98,25 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         );
     }
 
-    private async Task<int> UpdateApprenticeDetails(ApprenticeSyncResponseDto apprenticeSyncResponseDto, CancellationToken cancellationToken)
+    private int UpdateApprenticeDetails(List<Member> members, ApprenticeSyncResponseDto apprenticeSyncResponseDto, CancellationToken cancellationToken)
     {
-        var apprentices = await _apprenticeshipRespository.GetApprentices(
-            apprenticeSyncResponseDto.Apprentices.Select(a => a.ApprenticeID).ToArray(),
-            cancellationToken
-        );
-
-        if (apprentices is null || apprentices.Count == 0)
-            return default;
-
-        var memberIds = apprentices.Select(a => a.MemberId).ToArray();
-
-        var members = await _memberRepository.GetMembers(memberIds, cancellationToken);
+        var apprentices = apprenticeSyncResponseDto.Apprentices;
 
         foreach (var member in members)
         { 
-            var apprentice = apprentices.Find(a => a.MemberId == member.Id);
+            var apprentice = apprentices.FirstOrDefault(a => a.ApprenticeID == member.Apprentice.ApprenticeId);
 
             if (apprentice == null)
                 continue;
 
-            var apprenticeResponse = Array.Find(apprenticeSyncResponseDto.Apprentices, a => a.ApprenticeID == apprentice.ApprenticeId);
-
-            if (apprenticeResponse == null)
-                continue;
-
-            member.FirstName = apprenticeResponse.FirstName;
-            member.LastName = apprenticeResponse.LastName;
-            member.Email = apprenticeResponse.Email;
+            _synchroniseApprenticeDetailsRepository.UpdateMemberDetails(
+                member, 
+                apprentice.FirstName, 
+                apprentice.LastName, 
+                apprentice.Email
+            );
         }
-
-        await _memberRepository.UpdateMembers(members, cancellationToken);
 
         return members.Count;
-    }
-
-    private async Task RecordAudit(JobAudit jobAudit, Response<ApprenticeSyncResponseDto> response, CancellationToken cancellationToken)
-    {
-        try
-        {
-            jobAudit.EndTime = DateTime.UtcNow;
-            jobAudit.Notes = response?.StringContent;
-            await _jobAuditRepository.RecordAudit(jobAudit, cancellationToken);
-        }
-        catch(Exception _exception)
-        {
-            _logger.LogError(_exception, "Unable to record an audit record for {JobName}", jobAudit.JobName);
-        }
     }
 }
