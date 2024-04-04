@@ -50,7 +50,7 @@ public class MemberRepositoryTests
             await context.SaveChangesAsync(cancellationToken);
 
             var sut = new MemberRepository(_logger.Object, context);
-            result = await sut.GetMembers(cancellationToken, membersToAdd.Select(a => a.Id).ToArray());
+            result = await sut.GetMembers(membersToAdd.Select(a => a.Id).ToArray(), cancellationToken);
         }
 
         Assert.That(result, Is.Not.Null);
@@ -69,7 +69,7 @@ public class MemberRepositoryTests
 
         Assert.ThrowsAsync<ArgumentException>(async () =>
         {
-            await sut.GetMembers(cancellationToken, []);
+            await sut.GetMembers([], cancellationToken);
         });
     }
 
@@ -95,7 +95,7 @@ public class MemberRepositoryTests
             member.FirstName = $"{member.FirstName}_updated";
 
             var sut = new MemberRepository(_logger.Object, context);
-            await sut.UpdateMembers(cancellationToken, [member]);
+            await sut.UpdateMembers([member], cancellationToken);
             updatedMember = context.Members.FirstOrDefault(t => t.Id == member.Id);
         }
 
@@ -119,7 +119,7 @@ public class MemberRepositoryTests
 
         Assert.ThrowsAsync<Exception>(async () =>
         {
-            await sut.UpdateMembers(cancellationToken, []);
+            await sut.UpdateMembers([], cancellationToken);
         });
     }
 

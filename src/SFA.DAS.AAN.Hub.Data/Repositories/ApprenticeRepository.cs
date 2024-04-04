@@ -29,7 +29,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             }
         }
 
-        public async Task<List<Apprentice>> GetApprentices(CancellationToken cancellationToken, Guid[] ids)
+        public async Task<List<Apprentice>> GetApprentices(Guid[] ids, CancellationToken cancellationToken)
         {
             try
             {

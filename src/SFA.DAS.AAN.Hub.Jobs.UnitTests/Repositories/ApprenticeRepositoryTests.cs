@@ -96,7 +96,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
                 await context.SaveChangesAsync(cancellationToken);
 
                 var sut = new ApprenticeRepository(_logger.Object, context);
-                result = await sut.GetApprentices(cancellationToken, apprenticesToAdd.Select(a => a.ApprenticeId).ToArray());
+                result = await sut.GetApprentices(apprenticesToAdd.Select(a => a.ApprenticeId).ToArray(), cancellationToken);
             }
 
             Assert.That(result, Is.Not.Null);
@@ -117,7 +117,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Repositories
         {
             var mockContext = new Mock<IAanDataContext>();
             ApprenticeRepository sut = new ApprenticeRepository(_logger.Object, mockContext.Object);
-            var result = await sut.GetApprentices(cancellationToken, []);
+            var result = await sut.GetApprentices([], cancellationToken);
             Assert.That(result, Is.Empty);   
         }
     }
