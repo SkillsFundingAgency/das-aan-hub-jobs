@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{DCE3D45B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SFA.DAS.AAN.Hub.Jobs.UnitTests", "SFA.DAS.AAN.Hub.Jobs.UnitTests\SFA.DAS.AAN.Hub.Jobs.UnitTests.csproj", "{BC1D52F4-6180-40BA-BF1B-5547E7FB2E3A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Jobs.IntegrationTests", "SFA.DAS.AAN.Hub.Jobs.IntegrationTests\SFA.DAS.AAN.Hub.Jobs.IntegrationTests.csproj", "{DFE656B9-B59B-440A-8AAA-49651B811B8A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.AAN.Hub.Data.UnitTests", "SFA.DAS.AAN.Hub.Data.UnitTests\SFA.DAS.AAN.Hub.Data.UnitTests.csproj", "{DFE656B9-B59B-440A-8AAA-49651B811B8A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
