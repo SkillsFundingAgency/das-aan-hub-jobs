@@ -37,7 +37,7 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
     "EnvironmentName": "LOCAL",
     "SendNotificationsFunctionSchedule": "0 */3 * * * *",
     "MemberDataCleanupFunctionSchedule": "0 */3 * * * *",
-    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 * * *"
+    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 0 * * *"
   },
   "AzureWebJobs.SendNotificationsFunction.Disabled": "false",
   "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false",

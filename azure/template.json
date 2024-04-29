@@ -81,7 +81,8 @@
     "appServicePlanName": "[concat(variables('resourceNamePrefix'), '-asp')]",
     "configNames": "SFA.DAS.AANHub.Jobs",
     "memberDataCleanupSchedule": "0 0 4 * * 1-5",
-    "notificationsSchedule": "0 */5 * * * *"
+    "notificationsSchedule": "0 */5 * * * *",
+    "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *"
   },
   "resources": [
     {
@@ -260,6 +261,10 @@
                 {
                   "name": "SendNotificationsFunctionSchedule",
                   "value": "[variables('notificationsSchedule')]"
+                },
+                {
+                  "name": "SynchroniseApprenticeDetailsFunctionSchedule",
+                  "value": "[variables('synchroniseApprenticeDetailsSchedule')]"
                 }
               ]
             }
