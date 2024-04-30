@@ -16,7 +16,7 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
         public async Task<JobAudit?> GetMostRecentJobAudit(string jobName, CancellationToken cancellationToken)
         {
             return await _context.JobAudits
-                            .Where(a => string.Equals(a.JobName, jobName, StringComparison.Ordinal))
+                            .Where(a => a.JobName == jobName)
                             .AsNoTracking()
                             .OrderByDescending(a => a.StartTime)
                             .FirstOrDefaultAsync(cancellationToken);
