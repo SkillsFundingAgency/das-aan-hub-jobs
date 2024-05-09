@@ -25,7 +25,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
 
             var count = await _synchroniseApprenticeDetailsService.SynchroniseApprentices(cancellationToken);
 
-            _logger.LogInformation("Processed {ApprenticeCount} apprentices.", count);
+            _logger.LogInformation("Processed {ApprenticeCount} apprentices, update {UpdatedCount}.", count.Item1, count.Item2);
         }
     }
 }

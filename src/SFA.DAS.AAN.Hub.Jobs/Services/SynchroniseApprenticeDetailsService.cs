@@ -17,7 +17,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
 public interface ISynchroniseApprenticeDetailsService
 {
-    Task<int> SynchroniseApprentices(CancellationToken cancellationToken);
+    Task<(int, int)> SynchroniseApprentices(CancellationToken cancellationToken);
 }
 
 public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetailsService
@@ -43,7 +43,7 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         _synchroniseApprenticeDetailsRepository = synchroniseApprenticeDetailsRepository;
     }
 
-    public async Task<int> SynchroniseApprentices(CancellationToken cancellationToken)
+    public async Task<(int, int)> SynchroniseApprentices(CancellationToken cancellationToken)
     {
         JobAudit audit = new JobAudit()
         {
@@ -68,20 +68,20 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         if (!responseObject.Apprentices.Any())
             return await RecordAuditAndReturnDefault(audit, cancellationToken);
 
-        int updatedApprenticeCount = UpdateApprenticeDetails(members, responseObject);
+        var processedMembers = UpdateApprenticeDetails(members, responseObject);
 
         await _synchroniseApprenticeDetailsRepository.AddJobAudit(audit, response.StringContent, cancellationToken);
 
         await _aanDataContext.SaveChangesAsync(cancellationToken);
 
-        return updatedApprenticeCount;
+        return processedMembers;
     }
 
-    private async Task<int> RecordAuditAndReturnDefault(JobAudit audit, CancellationToken cancellationToken)
+    private async Task<(int, int)> RecordAuditAndReturnDefault(JobAudit audit, CancellationToken cancellationToken)
     {
         await _synchroniseApprenticeDetailsRepository.AddJobAudit(audit, null, cancellationToken);
         await _aanDataContext.SaveChangesAsync(cancellationToken);
-        return default;
+        return (default, default);
     }
 
     private async Task<Response<ApprenticeSyncResponseDto>> QueryApprenticeApi(Guid[] apprenticeIds, CancellationToken cancellationToken)
@@ -95,9 +95,11 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
         );
     }
 
-    private int UpdateApprenticeDetails(List<Member> members, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
+    private (int, int) UpdateApprenticeDetails(List<Member> members, ApprenticeSyncResponseDto apprenticeSyncResponseDto)
     {
         var apprentices = apprenticeSyncResponseDto.Apprentices;
+
+        int updatedMembers = 0;
 
         foreach (var member in members)
         { 
@@ -112,8 +114,10 @@ public class SynchroniseApprenticeDetailsService : ISynchroniseApprenticeDetails
                 apprentice.LastName, 
                 apprentice.Email
             );
+
+            updatedMembers++;
         }
 
-        return members.Count;
+        return (members.Count, updatedMembers);
     }
 }

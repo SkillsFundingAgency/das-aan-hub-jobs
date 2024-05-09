@@ -83,7 +83,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
             _synchroniseApprenticeDetailsRepository.Verify(x => 
                 x.AddJobAudit(It.IsAny<JobAudit>(), It.IsAny<string>(), _cancellationToken), Times.Exactly(1));
 
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.EqualTo((0, 0)));
         }
 
         [Test]
@@ -114,7 +114,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
 
             var result = await sut.SynchroniseApprentices(_cancellationToken);
 
-            Assert.That(result, Is.EqualTo(0));
+            Assert.That(result, Is.EqualTo((0, 0)));
 
             _apprenticeAccountsApiClientMock.Verify();
         }
@@ -216,11 +216,11 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services.Apprentices
                     It.IsAny<string>(), 
                     It.IsAny<string>(), 
                     It.IsAny<string>()
-                    ), 
+                ), 
                 Times.Exactly(3)
             );
 
-            Assert.That(result, Is.EqualTo(3));
+            Assert.That(result, Is.EqualTo((3, 3)));
         }
 
         private void SetupEmptyMocks()
