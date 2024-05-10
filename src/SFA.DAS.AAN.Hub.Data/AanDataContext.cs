@@ -14,6 +14,7 @@ public class AanDataContext : DbContext, IAanDataContext
     public DbSet<Employer> Employers => Set<Employer>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
+    public DbSet<JobAudit> JobAudits => Set<JobAudit>();
 
     public AanDataContext(DbContextOptions<AanDataContext> options) : base(options) { }
 

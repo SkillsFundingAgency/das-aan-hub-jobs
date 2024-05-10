@@ -11,6 +11,7 @@ public static class AddApplicationRegistrationsExtension
     {
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<IMemberDataCleanupService, MemberDataCleanupService>();
+        services.AddTransient<ISynchroniseApprenticeDetailsService, SynchroniseApprenticeDetailsService>();
         return services;
     }
 }

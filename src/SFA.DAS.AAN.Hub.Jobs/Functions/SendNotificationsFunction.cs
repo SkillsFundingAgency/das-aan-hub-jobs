@@ -1,8 +1,8 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Jobs.Services;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Functions;
 
@@ -17,7 +17,7 @@ public class SendNotificationsFunction
     }
 
     [Function(nameof(SendNotificationsFunction))]
-    public async Task Run([TimerTrigger("%SendNotificationsFunctionSchedule%", RunOnStartup = true)] TimerInfo timer, CancellationToken cancellationToken)
+    public async Task Run([TimerTrigger("%SendNotificationsFunctionSchedule%", RunOnStartup = false)] TimerInfo timer, CancellationToken cancellationToken)
     {
         _logger.LogInformation("SendNotificationsFunction has been triggered.");
 
