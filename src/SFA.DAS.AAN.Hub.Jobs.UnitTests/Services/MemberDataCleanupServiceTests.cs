@@ -21,6 +21,14 @@ public class MemberDataCleanupServiceTests
         _contextMock = new();
 
         Fixture fixture = new();
+
+        fixture.Behaviors
+            .OfType<ThrowingRecursionBehavior>()
+            .ToList()
+            .ForEach(b => fixture.Behaviors.Remove(b));
+
+        fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+
         _cancellationToken = fixture.Create<CancellationToken>();
 
         var auditsToRemove = new List<Audit>

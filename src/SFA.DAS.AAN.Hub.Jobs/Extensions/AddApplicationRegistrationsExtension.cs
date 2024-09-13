@@ -9,6 +9,7 @@ public static class AddApplicationRegistrationsExtension
 {
     public static IServiceCollection AddApplicationRegistrations(this IServiceCollection services)
     {
+        services.AddTransient<IEventSignUpNotificationService, EventSignUpNotificationService>();
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<IMemberDataCleanupService, MemberDataCleanupService>();
         services.AddTransient<ISynchroniseApprenticeDetailsService, SynchroniseApprenticeDetailsService>();
