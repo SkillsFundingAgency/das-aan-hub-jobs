@@ -12,6 +12,7 @@ using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data;
 using Microsoft.Extensions.Options;
+using System.Text;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -46,11 +47,29 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
     public async Task<int> ProcessEventSignUpNotification(CancellationToken cancellationToken)
     {
+        // get all events
         var pendingEventSignUpNotifications = await _eventSignUpNotificationRepository.GetEventSignUpNotification();
 
         if (pendingEventSignUpNotifications.Count == 0) return 0;
 
-        var tasks = pendingEventSignUpNotifications.Select(n => SendNotification(n));
+        // group events per admin id
+        var notificationPerAdmin = pendingEventSignUpNotifications.GroupBy(n => n.AdminMemberId);
+
+        // send notification per admin
+        var tasks = notificationPerAdmin.Select(async n =>
+        {
+            var email = "TODO: get email";
+
+            var tokens = new Dictionary<string, string>
+            {
+                { "admin-event-listing-snippet", GetEventListingSnippet(n) }
+            };
+            var templateId = _applicationConfiguration.Notifications.Templates["TODO_templateName"];
+
+            var command = new SendEmailCommand(templateId, email, tokens);
+
+            await _messageSession.Send(command);
+        });
 
         await Task.WhenAll(tasks);
 
@@ -59,38 +78,24 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         return pendingEventSignUpNotifications.Count;
     }
 
-    private async Task SendNotification(EventSignUpNotification notification)
+    private string GetEventListingSnippet(IEnumerable<EventSignUpNotification> notifications)
     {
-        try
-        {
-            var command = CreateCommand(notification);
-            await _messageSession.Send(command);
-            // notification.SentTime = DateTime.UtcNow;
-        }
-        catch (Exception ex)
-        {
-            // var notificationId = notification.Id;
-            // catch all exceptions to allow other notifications to go forward
-            _logger.LogError(ex, "Error sending out notification for event: {eventTitle}", notification.EventTitle);
-        }
-    }
+        var sb = new StringBuilder();
 
-    private SendEmailCommand CreateCommand(EventSignUpNotification notification)
-    {
-        var email ="TODO: get email";
-        var tokens = new Dictionary<string, string>
+        foreach (var n in notifications)
         {
-            { "EventTitle", notification.EventTitle },
-            { "EventFormat", notification.EventFormat },
-            { "StartDate", notification.StartDate.ToString("dd/MM/yyyy") },
-            { "EndDate", notification.EndDate.ToString("dd/MM/yyyy") },
-            { "FirstName", notification.FirstName },
-            { "LastName", notification.LastName },
-            { "NewAmbassadorsCount", notification.NewAmbassadorsCount.ToString() },
-            { "TotalAmbassadorsCount", notification.TotalAmbassadorsCount.ToString() }
-        };
-        var templateId = _applicationConfiguration.Notifications.Templates["TODO_templateName"];
+            sb.AppendLine($"# {n.EventTitle}");
+            sb.AppendLine();
+            sb.AppendLine($"{n.EventFormat}");
+            sb.AppendLine($"{n.CalendarName}");
+            sb.AppendLine($"{n.StartDate}");
+            sb.AppendLine();
+            sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
+            sb.AppendLine();
+            sb.AppendLine("---");
+            sb.AppendLine();
+        }
 
-        return new(templateId, email, tokens);
+        return sb.ToString();
     }
 }
