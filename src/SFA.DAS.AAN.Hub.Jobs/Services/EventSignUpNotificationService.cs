@@ -26,6 +26,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
     public const string LinkTokenKey = "link";
 
     private readonly IEventSignUpNotificationRepository _eventSignUpNotificationRepository;
+    private readonly IMemberRepository _memberRepository;
     private readonly ILogger<NotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
@@ -33,12 +34,14 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
     public EventSignUpNotificationService(
         IEventSignUpNotificationRepository eventSignUpNotificationRepository,
+        IMemberRepository memberRepository,
         IMessageSession messageSession,
         IAanDataContext aanDataContext,
         IOptions<ApplicationConfiguration> applicationConfigurationOptions,
         ILogger<NotificationService> logger)
     {
         _eventSignUpNotificationRepository = eventSignUpNotificationRepository;
+        _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _aanDataContext = aanDataContext;
@@ -58,20 +61,38 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         // send notification per admin
         var tasks = notificationPerAdmin.Select(async n =>
         {
-            var email = "TODO: get email";
+            var adminDetails = await _memberRepository.GetAdminMemberEmailById(n.Key, cancellationToken);
+            var firstName = adminDetails.FirstName;
+            var email = adminDetails.Email;
+            var numberOfEvents = n.Count().ToString();
 
             var tokens = new Dictionary<string, string>
             {
-                { "admin-event-listing-snippet", GetEventListingSnippet(n) }
+                { "contact_name", firstName },
+                { "number_of_events", numberOfEvents },
+                { "admin-event-listing-snippet", GetEventListingSnippet(n) },
+                { "searchNetworkEventsURL", "TODO" },
+                { "notificationSettingsURL", "TODO"}
             };
             var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
 
             var command = new SendEmailCommand(templateId, email, tokens);
 
+            try
+            {
+                await _messageSession.Send(command);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to send email");
+            }
+
             await _messageSession.Send(command);
         });
 
         await Task.WhenAll(tasks);
+
+        // Should probably create and save a notification record for this, after having sent the email
 
         await _aanDataContext.SaveChangesAsync(cancellationToken);
 
@@ -91,6 +112,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             sb.AppendLine($"{n.StartDate}");
             sb.AppendLine();
             sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
+            sb.AppendLine("TODO Manage event Link");
             sb.AppendLine();
             sb.AppendLine("---");
             sb.AppendLine();

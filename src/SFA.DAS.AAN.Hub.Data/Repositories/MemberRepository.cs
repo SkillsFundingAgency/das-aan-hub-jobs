@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 
@@ -21,6 +22,19 @@ namespace SFA.DAS.AAN.Hub.Data.Repositories
             )
             .Include(a => a.Apprentice)
             .ToListAsync(cancellationToken);
+        }
+
+        public async Task<MemberDetails?> GetAdminMemberEmailById(Guid id, CancellationToken cancellationToken)
+        {
+            return await _context.Members
+                .Where(m => m.UserType == UserType.Admin && m.Id == id)
+                .Select(m => new MemberDetails
+                {
+                    Id = m.Id,
+                    FirstName = m.FirstName,
+                    Email = m.Email
+                })
+                .SingleOrDefaultAsync(cancellationToken);
         }
     }
 }
