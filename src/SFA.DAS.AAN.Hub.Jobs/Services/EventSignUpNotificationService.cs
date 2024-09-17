@@ -64,7 +64,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             {
                 { "admin-event-listing-snippet", GetEventListingSnippet(n) }
             };
-            var templateId = _applicationConfiguration.Notifications.Templates["TODO_templateName"];
+            var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
 
             var command = new SendEmailCommand(templateId, email, tokens);
 
