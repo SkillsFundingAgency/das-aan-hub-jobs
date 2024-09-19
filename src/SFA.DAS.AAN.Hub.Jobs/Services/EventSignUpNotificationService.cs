@@ -58,46 +58,46 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         // group events per admin id
         var notificationPerAdmin = pendingEventSignUpNotifications.GroupBy(n => n.AdminMemberId);
 
-        // send notification per admin
-        var tasks = notificationPerAdmin.Select(async n =>
-        {
-            var adminDetails = await _memberRepository.GetAdminMemberEmailById(n.Key, cancellationToken);
-            var firstName = adminDetails.FirstName;
-            var email = adminDetails.Email;
-            var numberOfEvents = n.Count().ToString();
-
-            var tokens = new Dictionary<string, string>
-            {
-                { "contact_name", firstName },
-                { "number_of_events", numberOfEvents },
-                { "admin-event-listing-snippet", GetEventListingSnippet(n) },
-                { "searchNetworkEventsURL", "TODO" },
-                { "notificationSettingsURL", "TODO"}
-            };
-            var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
-
-            var command = new SendEmailCommand(templateId, email, tokens);
-
-            try
-            {
-                await _messageSession.Send(command);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Failed to send email");
-            }
-
-            await _messageSession.Send(command);
-        });
+        // Create a list of tasks to send notifications
+        var tasks = notificationPerAdmin.Select(group => SendAdminEventSignUpEmails(group.Key, group, cancellationToken));
 
         await Task.WhenAll(tasks);
 
-        // Should probably create and save a notification record for this, after having sent the email
-
-        await _aanDataContext.SaveChangesAsync(cancellationToken);
+        await _aanDataContext.SaveChangesAsync(cancellationToken); // this to confirm if to take out, do we need to save Notifications?
 
         return pendingEventSignUpNotifications.Count;
     }
+
+    private async Task SendAdminEventSignUpEmails(Guid memberId, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
+    {
+        var adminDetails = await _memberRepository.GetAdminMemberEmailById(memberId, cancellationToken);
+
+        var tokens = new Dictionary<string, string>
+            {
+                { "contact_name", adminDetails.FirstName },
+                { "number_of_events", events.Count().ToString() },
+                { "admin-event-listing-snippet", GetEventListingSnippet(events) },
+                { "searchNetworkEventsURL", "TODO" },
+                { "notificationSettingsURL", "TODO"}
+            };
+
+        var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
+
+        var command = new SendEmailCommand(templateId, adminDetails.Email, tokens);
+
+        try
+        {
+            _logger.LogInformation("Sending email to member {memberId}.", memberId);
+            await _messageSession.Send(command);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to send email");
+        }
+
+        await _messageSession.Send(command);
+    }
+
 
     private string GetEventListingSnippet(IEnumerable<EventSignUpNotification> notifications)
     {
