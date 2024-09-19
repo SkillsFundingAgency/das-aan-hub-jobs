@@ -72,13 +72,16 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
     {
         var adminDetails = await _memberRepository.GetAdminMemberEmailById(memberId, cancellationToken);
 
+        var searchNetworkEventsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events"; 
+        var notificationSettingsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "notification-settings";
+
         var tokens = new Dictionary<string, string>
             {
                 { "contact_name", adminDetails.FirstName },
                 { "number_of_events", events.Count().ToString() },
                 { "admin-event-listing-snippet", GetEventListingSnippet(events) },
-                { "searchNetworkEventsURL", "TODO" },
-                { "notificationSettingsURL", "TODO"}
+                { "searchNetworkEventsURL", searchNetworkEventsURL },
+                { "notificationSettingsURL", notificationSettingsURL}
             };
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
@@ -105,6 +108,8 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         foreach (var n in notifications)
         {
+            var manageEventUrl = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events/" + n.CalendarEventId.ToString();
+
             sb.AppendLine($"# {n.EventTitle}");
             sb.AppendLine();
             sb.AppendLine($"{n.EventFormat}");
@@ -112,7 +117,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             sb.AppendLine($"{n.StartDate}");
             sb.AppendLine();
             sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
-            sb.AppendLine("TODO Manage event Link");
+            sb.AppendLine($"{manageEventUrl}");
             sb.AppendLine();
             sb.AppendLine("---");
             sb.AppendLine();
