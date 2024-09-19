@@ -13,6 +13,7 @@ using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data;
 using Microsoft.Extensions.Options;
 using System.Text;
+using SFA.DAS.NServiceBus;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -70,9 +71,26 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
     private async Task SendAdminEventSignUpEmails(Guid memberId, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
     {
+        var command = CreateSendCommand(memberId,events,cancellationToken);
+
+        try
+        {
+            _logger.LogInformation("Sending email to member {memberId}.", memberId);
+            await _messageSession.Send(command);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to send email");
+        }
+
+        await _messageSession.Send(command);
+    }
+
+    private async Task<SendEmailCommand> CreateSendCommand(Guid memberId, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
+    {
         var adminDetails = await _memberRepository.GetAdminMemberEmailById(memberId, cancellationToken);
 
-        var searchNetworkEventsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events"; 
+        var searchNetworkEventsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events";
         var notificationSettingsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "notification-settings";
 
         var tokens = new Dictionary<string, string>
@@ -86,19 +104,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
 
-        var command = new SendEmailCommand(templateId, adminDetails.Email, tokens);
-
-        try
-        {
-            _logger.LogInformation("Sending email to member {memberId}.", memberId);
-            await _messageSession.Send(command);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Failed to send email");
-        }
-
-        await _messageSession.Send(command);
+        return new SendEmailCommand(templateId, adminDetails.Email, tokens);
     }
 
 
