@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using NServiceBus;
-using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
@@ -10,10 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Dto;
-using SFA.DAS.AAN.Hub.Data;
 using Microsoft.Extensions.Options;
 using System.Text;
-using SFA.DAS.NServiceBus;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -24,28 +21,23 @@ public interface IEventSignUpNotificationService
 
 public class EventSignUpNotificationService : IEventSignUpNotificationService
 {
-    public const string LinkTokenKey = "link";
-
     private readonly IEventSignUpNotificationRepository _eventSignUpNotificationRepository;
     private readonly IMemberRepository _memberRepository;
-    private readonly ILogger<NotificationService> _logger;
+    private readonly ILogger<EventSignUpNotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
-    private readonly IAanDataContext _aanDataContext;
 
     public EventSignUpNotificationService(
         IEventSignUpNotificationRepository eventSignUpNotificationRepository,
         IMemberRepository memberRepository,
         IMessageSession messageSession,
-        IAanDataContext aanDataContext,
         IOptions<ApplicationConfiguration> applicationConfigurationOptions,
-        ILogger<NotificationService> logger)
+        ILogger<EventSignUpNotificationService> logger)
     {
         _eventSignUpNotificationRepository = eventSignUpNotificationRepository;
         _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
-        _aanDataContext = aanDataContext;
         _logger = logger;
     }
 
@@ -53,6 +45,8 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
     {
         // get all events
         var pendingEventSignUpNotifications = await _eventSignUpNotificationRepository.GetEventSignUpNotification();
+
+        _logger.LogInformation("Number of members signed up to an event in the last 24 hours: {count}.", pendingEventSignUpNotifications.Count);
 
         if (pendingEventSignUpNotifications.Count == 0) return 0;
 
@@ -63,8 +57,6 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         var tasks = notificationPerAdmin.Select(group => SendAdminEventSignUpEmails(group.Key, group, cancellationToken));
 
         await Task.WhenAll(tasks);
-
-        await _aanDataContext.SaveChangesAsync(cancellationToken); // this to confirm if to take out, do we need to save Notifications?
 
         return pendingEventSignUpNotifications.Count;
     }
@@ -82,8 +74,6 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         {
             Console.Error.WriteLine($"Failed to send email");
         }
-
-        await _messageSession.Send(command);
     }
 
     private async Task<SendEmailCommand> CreateSendCommand(Guid memberId, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
