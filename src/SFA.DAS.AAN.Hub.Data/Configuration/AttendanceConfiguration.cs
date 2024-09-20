@@ -12,5 +12,9 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
     {
         builder.ToTable(nameof(Attendance));
         builder.HasKey(x => x.Id);
+
+        builder.HasOne(a => a.CalendarEvent)
+            .WithMany()
+            .HasForeignKey(a => a.CalendarEventId);
     }
 }

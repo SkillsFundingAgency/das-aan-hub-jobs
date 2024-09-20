@@ -11,5 +11,13 @@ public class CalendarEventConfiguration : IEntityTypeConfiguration<CalendarEvent
     {
         builder.ToTable(nameof(CalendarEvent));
         builder.HasKey(x => x.Id);
+
+        builder.HasOne(ce => ce.Calender)
+            .WithOne()
+            .HasForeignKey<CalendarEvent>(ce => ce.CalendarId);
+
+        builder.HasOne(cm => cm.Member)
+            .WithOne()
+            .HasForeignKey<CalendarEvent>(cm => cm.CreatedByMemberId);
     }
 }

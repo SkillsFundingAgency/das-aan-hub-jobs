@@ -13,6 +13,7 @@ public interface IAanDataContext
     DbSet<Employer> Employers { get; }
     DbSet<Attendance> Attendances { get; }
     DbSet<CalendarEvent> CalendarEvents { get; }
+    DbSet<Calendar> Calendars { get; }
     DbSet<JobAudit> JobAudits { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
