@@ -18,6 +18,10 @@ public class EventSignUpNotificationRepository : IEventSignUpNotificationReposit
         var last24Hours = DateTime.UtcNow.AddHours(-96);
 
         return await _context.Attendances
+            .Include(a => a.CalendarEvent)
+            .ThenInclude(e => e.Member)
+            .Include(a => a.CalendarEvent)
+            .ThenInclude(e => e.Calender)
             .AsNoTracking()
             .Where(a => a.AddedDate >= last24Hours && a.CalendarEvent.Member.ReceiveNotifications)
             .Select(a => new EventSignUpNotification
