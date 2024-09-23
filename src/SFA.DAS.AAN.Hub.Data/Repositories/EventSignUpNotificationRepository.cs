@@ -15,7 +15,7 @@ public class EventSignUpNotificationRepository : IEventSignUpNotificationReposit
 
     public async Task<List<EventSignUpNotification>> GetEventSignUpNotification()
     {
-        var last24Hours = DateTime.UtcNow.AddHours(-24);
+        var last24Hours = DateTime.UtcNow.AddHours(-96);
 
         return await _context.Attendances
             .AsNoTracking()
