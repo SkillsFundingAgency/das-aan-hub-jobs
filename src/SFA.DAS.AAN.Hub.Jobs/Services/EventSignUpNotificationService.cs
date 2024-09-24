@@ -80,18 +80,21 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
     {
         var adminDetails = await _memberRepository.GetAdminMemberEmailById(memberId, cancellationToken);
 
+        _logger.LogInformation("Admin email is: {email}.", adminDetails.Email);
+
         var searchNetworkEventsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events";
         var notificationSettingsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "notification-settings";
 
+        _logger.LogInformation("network url: {searchNetworkEventsURL}.", searchNetworkEventsURL);
+        _logger.LogInformation("not url: {notificationSettingsURL}.", notificationSettingsURL);
+
         var tokens = new Dictionary<string, string>
             {
-                { "contact_name", adminDetails.FirstName },
-                { "number_of_events", events.Count().ToString() },
-                { "searchNetworkEventsURL", searchNetworkEventsURL },
-                { "notificationSettingsURL", notificationSettingsURL}
+                { "contact_name", "David" }
             };
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
+        _logger.LogInformation("templateId: {templateId}.", templateId);
 
         return new SendEmailCommand(templateId, adminDetails.Email, tokens);
     }
