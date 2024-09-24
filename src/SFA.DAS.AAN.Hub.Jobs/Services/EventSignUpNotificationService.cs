@@ -72,7 +72,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Failed to send email");
+            _logger.LogError("Sending email FAILED!");
         }
     }
 
@@ -90,7 +90,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         var tokens = new Dictionary<string, string>
             {
-                { "contact_name", "David" }
+                { "contact", "David" }
             };
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
