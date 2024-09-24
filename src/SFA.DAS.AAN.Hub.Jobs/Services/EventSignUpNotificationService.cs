@@ -72,7 +72,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError("Sending email FAILED!");
+            _logger.LogError(ex, "Sending email FAILED!");
         }
     }
 
