@@ -87,7 +87,6 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             {
                 { "contact_name", adminDetails.FirstName },
                 { "number_of_events", events.Count().ToString() },
-                { "admin-event-listing-snippet", GetEventListingSnippet(events) },
                 { "searchNetworkEventsURL", searchNetworkEventsURL },
                 { "notificationSettingsURL", notificationSettingsURL}
             };
