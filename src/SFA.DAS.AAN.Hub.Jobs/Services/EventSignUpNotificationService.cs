@@ -88,8 +88,8 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
     {
         _logger.LogInformation("Admin email is: {email}.", adminDetails.Email);
 
-        var searchNetworkEventsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events";
-        var notificationSettingsURL = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "notification-settings";
+        var searchNetworkEventsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "events";
+        var notificationSettingsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "notification-settings";
 
         _logger.LogInformation("network url: {searchNetworkEventsURL}.", searchNetworkEventsURL);
         _logger.LogInformation("not url: {notificationSettingsURL}.", notificationSettingsURL);
@@ -116,7 +116,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         foreach (var n in notifications)
         {
-            var manageEventUrl = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events/" + n.CalendarEventId.ToString();
+            var manageEventUrl = _applicationConfiguration.AdminAanBaseUrl.ToString() + "events/" + n.CalendarEventId.ToString();
             var eventDates = GetCalendarDateFormat(n.StartDate, n.EndDate);
 
             sb.AppendLine($"# {n.EventTitle}");
@@ -127,7 +127,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             sb.AppendLine();
             sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
             sb.AppendLine();
-            sb.AppendLine($"[Manage event]((({manageEventUrl})))");
+            sb.AppendLine($"[Manage event]({manageEventUrl})");
             sb.AppendLine();
             sb.AppendLine("---");
             sb.AppendLine();
