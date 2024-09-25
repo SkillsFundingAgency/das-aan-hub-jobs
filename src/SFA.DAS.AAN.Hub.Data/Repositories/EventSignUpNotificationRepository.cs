@@ -15,7 +15,7 @@ public class EventSignUpNotificationRepository : IEventSignUpNotificationReposit
 
     public async Task<List<EventSignUpNotification>> GetEventSignUpNotification()
     {
-        var last24Hours = DateTime.UtcNow.AddHours(-96);
+        var last24Hours = DateTime.UtcNow.AddHours(-24);
 
         return await _context.Attendances
             .AsNoTracking()
@@ -30,6 +30,7 @@ public class EventSignUpNotificationRepository : IEventSignUpNotificationReposit
                 EndDate = a.CalendarEvent.EndDate,
                 FirstName = a.CalendarEvent.Member.FirstName,
                 LastName = a.CalendarEvent.Member.LastName,
+                AdminEmail = a.CalendarEvent.Member.Email,
                 AdminMemberId = a.CalendarEvent.Member.Id,
                 NewAmbassadorsCount = _context.Attendances
                     .Count(att => att.CalendarEventId == a.CalendarEvent.Id && att.AddedDate >= last24Hours),

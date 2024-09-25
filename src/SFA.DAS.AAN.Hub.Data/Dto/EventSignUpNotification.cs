@@ -6,6 +6,7 @@ public class EventSignUpNotification
     public string CalendarName { get; set; } = null!;
     public string EventFormat { get; set; } = null!;
     public string EventTitle { get; set; } = null!;
+    public string AdminEmail { get; set; } = null!;
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;
     public DateTime StartDate { get; set; }

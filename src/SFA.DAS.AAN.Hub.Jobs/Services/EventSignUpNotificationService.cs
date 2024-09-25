@@ -64,17 +64,9 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
     private async Task SendAdminEventSignUpEmails(Guid memberId, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
     {
-        var adminDetails = await _memberRepository.GetAdminMemberEmailById(memberId, cancellationToken);
-
-        if (adminDetails == null) 
-        {
-            _logger.LogInformation("Cannot get admin details.");
-            return;
-        }
-
         try
         {
-            var command = CreateSendCommand(adminDetails, events, cancellationToken);
+            var command = CreateSendCommand(events, cancellationToken);
             _logger.LogInformation("Sending email to member {memberId}.", memberId);
             await _messageSession.Send(command);
         }
@@ -84,16 +76,16 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(MemberDetails adminDetails, IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(IEnumerable<EventSignUpNotification> events, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Admin email is: {email}.", adminDetails.Email);
-
+        var adminEmail = events.First().AdminEmail;
+        var adminFirstName = events.First().FirstName;
         var searchNetworkEventsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "events";
         var notificationSettingsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "notification-settings";
 
         var tokens = new Dictionary<string, string>
             {
-                { "contact", adminDetails.FirstName },
+                { "contact", adminFirstName },
                 { "number_of_events", events.Count().ToString() },
                 { "admin-event-listing-snippet", GetEventListingSnippet(events) },
                 { "searchNetworkEventsURL", searchNetworkEventsURL },
@@ -102,7 +94,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
 
-        return new SendEmailCommand(templateId, adminDetails.Email, tokens);
+        return new SendEmailCommand(templateId, adminEmail, tokens);
     }
 
 
