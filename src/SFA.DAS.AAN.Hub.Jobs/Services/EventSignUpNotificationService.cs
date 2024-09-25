@@ -91,9 +91,6 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         var searchNetworkEventsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "events";
         var notificationSettingsURL = _applicationConfiguration.AdminAanBaseUrl.ToString() + "notification-settings";
 
-        _logger.LogInformation("network url: {searchNetworkEventsURL}.", searchNetworkEventsURL);
-        _logger.LogInformation("not url: {notificationSettingsURL}.", notificationSettingsURL);
-
         var tokens = new Dictionary<string, string>
             {
                 { "contact", adminDetails.FirstName },
@@ -104,7 +101,6 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
             };
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
-        _logger.LogInformation("templateId: {templateId}.", templateId);
 
         return new SendEmailCommand(templateId, adminDetails.Email, tokens);
     }
