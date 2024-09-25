@@ -95,7 +95,11 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
 
         var tokens = new Dictionary<string, string>
             {
-                { "contact", "David" }
+                { "contact", adminDetails.FirstName },
+                { "number_of_events", events.Count().ToString() },
+                { "admin-event-listing-snippet", GetEventListingSnippet(events) },
+                { "searchNetworkEventsURL", searchNetworkEventsURL },
+                { "notificationSettingsURL", notificationSettingsURL}
             };
 
         var templateId = _applicationConfiguration.Notifications.Templates["AANAdminEventSignup"];
