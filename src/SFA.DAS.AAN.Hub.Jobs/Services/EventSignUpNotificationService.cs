@@ -11,6 +11,7 @@ using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Dto;
 using Microsoft.Extensions.Options;
 using System.Text;
+using System.Globalization;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -116,20 +117,32 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         foreach (var n in notifications)
         {
             var manageEventUrl = _applicationConfiguration.ApprenticeAanBaseUrl.ToString() + "events/" + n.CalendarEventId.ToString();
+            var eventDates = GetCalendarDateFormat(n.StartDate, n.EndDate);
 
             sb.AppendLine($"# {n.EventTitle}");
             sb.AppendLine();
-            sb.AppendLine($"{n.EventFormat}");
+            sb.AppendLine($"{n.EventFormat} event");
             sb.AppendLine($"{n.CalendarName}");
-            sb.AppendLine($"{n.StartDate}");
+            sb.AppendLine($"{eventDates}");
             sb.AppendLine();
             sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
-            sb.AppendLine($"{manageEventUrl}");
+            sb.AppendLine();
+            sb.AppendLine($"[Manage event]((({manageEventUrl})))");
             sb.AppendLine();
             sb.AppendLine("---");
             sb.AppendLine();
         }
 
         return sb.ToString();
+    }
+
+    private string GetCalendarDateFormat(DateTime startTime, DateTime endTime) 
+    {
+        var formattedStartDate = startTime.ToString("dd MMMM yyyy, hh:mmtt", CultureInfo.InvariantCulture);
+        formattedStartDate = formattedStartDate.Replace(" am", "am").Replace(" pm", "pm");
+
+        var formattedEndDateHour = endTime.ToString("htt", CultureInfo.InvariantCulture);
+        formattedEndDateHour = formattedEndDateHour.Replace(" am", "am").Replace(" pm", "pm");
+        return formattedStartDate + " to " + formattedEndDateHour;
     }
 }
