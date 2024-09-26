@@ -83,7 +83,7 @@
     "memberDataCleanupSchedule": "0 0 4 * * 1-5",
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
-    "eventSignUpNotificationFunctionSchedule": "0 15 * * *"
+    "eventSignUpNotificationFunctionSchedule": "*/30 * * * *"
   },
   "resources": [
     {
