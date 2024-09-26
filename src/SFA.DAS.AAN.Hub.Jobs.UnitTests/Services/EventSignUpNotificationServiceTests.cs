@@ -111,10 +111,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services
                 .Setup(x => x.GetEventSignUpNotification())
                 .ReturnsAsync(eventSignUpNotifications);
 
-            _mockMemberRepository
-                .Setup(x => x.GetAdminMemberEmailById(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(adminDetails);
-
             _mockMessageSession
                 .Setup(x => x.Send(It.IsAny<SendEmailCommand>(), It.IsAny<SendOptions>()))
                 .Returns(Task.CompletedTask);
