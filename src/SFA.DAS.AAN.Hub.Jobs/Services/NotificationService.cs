@@ -78,7 +78,7 @@ public class NotificationService : INotificationService
     {
         var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
         var tokens = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(notification.Tokens);
-        var adminBaseUrl = _applicationConfiguration.ApprenticeAanBaseUrl.ToString();
+        var adminBaseUrl = _applicationConfiguration.AdminAanBaseUrl.ToString();
 
         if (EmailTemplateName.AdminEventAttendanceCancelTemplate == notification.TemplateName)
         {
