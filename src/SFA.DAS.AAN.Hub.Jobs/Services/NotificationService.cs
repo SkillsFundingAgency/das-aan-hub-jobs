@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using static SFA.DAS.AAN.Hub.Jobs.Constants.Constants;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -77,10 +78,20 @@ public class NotificationService : INotificationService
     {
         var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
         var tokens = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(notification.Tokens);
+        var adminBaseUrl = _applicationConfiguration.AdminAanBaseUrl.ToString();
 
-        // add link token
-        var link = new Uri(notification.Member.UserType == UserType.Apprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
-        tokens.Add(LinkTokenKey, link.ToString());
+        if (EmailTemplateName.AdminEventAttendanceCancelTemplate == notification.TemplateName)
+        {
+            tokens.Add("manageeventlink", $"{adminBaseUrl}events/{tokens["calendarEventId"]}");
+            tokens.Add("alleventslink", $"{adminBaseUrl}events");
+            tokens.Add("unsubscribelink", $"{adminBaseUrl}notification-settings");
+        }
+        else
+        {
+            // add link token
+            var link = new Uri(notification.Member.UserType == UserType.Apprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl, $"links/{notification.Id}");
+            tokens.Add(LinkTokenKey, link.ToString());
+        }
 
         return new(templateId, notification.Member.Email, tokens);
     }
