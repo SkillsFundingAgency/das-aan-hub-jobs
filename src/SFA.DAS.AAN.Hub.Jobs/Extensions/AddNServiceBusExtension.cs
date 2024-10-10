@@ -48,6 +48,7 @@ internal static class AddNServiceBusExtension
         }
         else
         {
+            startServiceBusEndpoint = true;
             var transport = endpointConfiguration.UseTransport(new AzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString));
             transport.AddRouting();
         }
