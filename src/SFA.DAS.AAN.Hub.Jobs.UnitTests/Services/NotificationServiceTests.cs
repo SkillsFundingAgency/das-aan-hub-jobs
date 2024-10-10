@@ -54,7 +54,7 @@ public class NotificationServiceTests
         _repositoryMock.Setup(r => r.GetPendingNotifications(_applicationConfiguration.Notifications.BatchSize)).ReturnsAsync(_notifications);
 
         _messagingSessionMock = new Mock<IMessageSession>();
-        _messagingSessionMock.Setup(m => m.Send(It.Is<SendEmailCommand>(c => c.RecipientsAddress == _notifications.First().Member.Email), It.IsAny<SendOptions>())).Throws<Exception>();
+        _messagingSessionMock.Setup(m => m.Send(It.Is<SendEmailCommand>(c => c.RecipientsAddress == _notifications.First().Member.Email), It.IsAny<SendOptions>(), _cancellationToken)).Throws<Exception>();
 
         _sut = new(_repositoryMock.Object, _optionsMock.Object, _contextMock.Object, _messagingSessionMock.Object, _loggerMock.Object);
 
@@ -67,7 +67,7 @@ public class NotificationServiceTests
 
     [Test]
     public void ThenSendsMessageForEachNotification() =>
-        _messagingSessionMock.Verify(m => m.Send(It.IsAny<SendEmailCommand>(), It.IsAny<SendOptions>()), Times.Exactly(_notifications.Count));
+        _messagingSessionMock.Verify(m => m.Send(It.IsAny<SendEmailCommand>(), It.IsAny<SendOptions>(), _cancellationToken), Times.Exactly(_notifications.Count));
 
     [Test]
     public void ThenUpdatesSuccessfulNotificationsOnly() => _notifications.Count(n => n.SentTime.HasValue).Should().Be(2);
@@ -77,7 +77,7 @@ public class NotificationServiceTests
     {
         var notification = _notifications.First();
         var templateId = _applicationConfiguration.Notifications.Templates[notification.TemplateName];
-        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.RecipientsAddress == notification.Member.Email), It.IsAny<SendOptions>()), Times.Once);
+        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.RecipientsAddress == notification.Member.Email), It.IsAny<SendOptions>(), _cancellationToken), Times.Once);
     }
 
     [Test]
@@ -89,7 +89,7 @@ public class NotificationServiceTests
 
         var uri = notification.Member.UserType == UserType.Apprentice ? _applicationConfiguration.ApprenticeAanBaseUrl : _applicationConfiguration.EmployerAanBaseUrl;
 
-        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.Tokens[NotificationService.LinkTokenKey].Contains(uri.ToString())), It.IsAny<SendOptions>()));
+        _messagingSessionMock.Verify(m => m.Send(It.Is<SendEmailCommand>(c => c.TemplateId == templateId && c.Tokens[NotificationService.LinkTokenKey].Contains(uri.ToString())), It.IsAny<SendOptions>(), _cancellationToken));
     }
 }
 

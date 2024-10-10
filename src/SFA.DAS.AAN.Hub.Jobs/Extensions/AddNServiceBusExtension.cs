@@ -3,9 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using SFA.DAS.NServiceBus.Configuration;
-using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
-using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
@@ -21,16 +18,16 @@ internal static class AddNServiceBusExtension
 
         NServiceBusConfiguration nServiceBusConfiguration = new();
         configuration.GetSection(nameof(NServiceBusConfiguration)).Bind(nServiceBusConfiguration);
-
-        var endpointConfiguration = new EndpointConfiguration(EndpointName)
-                .UseErrorQueue($"{EndpointName}-errors")
-                .UseInstallers()
-                .UseMessageConventions()
-                .UseNewtonsoftJsonSerializer();
+        
+        var endpointConfiguration = new EndpointConfiguration(EndpointName);
+        endpointConfiguration.EnableInstallers();
+        endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
+        endpointConfiguration.Conventions();
+        endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
         {
-            endpointConfiguration.UseLicense(nServiceBusConfiguration.NServiceBusLicense);
+            endpointConfiguration.License(nServiceBusConfiguration.NServiceBusLicense);
         }
 
         endpointConfiguration.SendOnly();
@@ -51,8 +48,8 @@ internal static class AddNServiceBusExtension
         }
         else
         {
-            endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
-            startServiceBusEndpoint = true;
+            var transport = endpointConfiguration.UseTransport(new AzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString));
+            transport.AddRouting();
         }
 
         if (startServiceBusEndpoint)
@@ -63,7 +60,6 @@ internal static class AddNServiceBusExtension
                 .AddSingleton(p => endpointInstance)
                 .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
         }
-
     }
 }
 
