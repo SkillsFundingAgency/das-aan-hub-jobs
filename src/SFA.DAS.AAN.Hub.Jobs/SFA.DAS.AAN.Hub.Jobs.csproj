@@ -22,9 +22,9 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.0" />
     <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
-    <PackageReference Include="NServiceBus" Version="9.2.2" />
-    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="4.0.0" />
-    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="4.2.3" />
+    <PackageReference Include="NServiceBus" Version="7.2.3" />
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.4.0" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="2.0.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SFA.DAS.AAN.Hub.Data\SFA.DAS.AAN.Hub.Data.csproj" />

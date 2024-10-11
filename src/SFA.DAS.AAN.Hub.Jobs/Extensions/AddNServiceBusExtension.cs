@@ -13,6 +13,7 @@ internal static class AddNServiceBusExtension
 {
     public const string NotificationsQueue = "SFA.DAS.Notifications.MessageHandlers";
     public const string EndpointName = "SFA.DAS.AAN.Hub.Jobs";
+    private const string NotificationsMessageHandler = "SFA.DAS.Notifications.MessageHandlers";
     public static void AddNServiceBus(this IServiceCollection services, IConfiguration configuration)
     {
 
@@ -40,7 +41,7 @@ internal static class AddNServiceBusExtension
             if (string.IsNullOrWhiteSpace(notificationJob) || notificationJob.Equals("false", StringComparison.OrdinalIgnoreCase))
             {
                 var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
-                transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
+                transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
                 var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
                 transport.ConnectionString(connectionString);
                 startServiceBusEndpoint = true;
@@ -48,9 +49,10 @@ internal static class AddNServiceBusExtension
         }
         else
         {
+            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+            transport.ConnectionString(nServiceBusConfiguration.NServiceBusConnectionString);
+            transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
             startServiceBusEndpoint = true;
-            var transport = endpointConfiguration.UseTransport(new AzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString));
-            transport.AddRouting();
         }
 
         if (startServiceBusEndpoint)
@@ -61,15 +63,5 @@ internal static class AddNServiceBusExtension
                 .AddSingleton(p => endpointInstance)
                 .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
         }
-    }
-}
-
-public static class RoutingSettingsExtensions
-{
-    public const string NotificationsMessageHandler = "SFA.DAS.Notifications.MessageHandlers";
-
-    public static void AddRouting(this RoutingSettings routingSettings)
-    {
-        routingSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
     }
 }
