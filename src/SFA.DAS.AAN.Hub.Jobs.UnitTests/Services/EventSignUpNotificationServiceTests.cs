@@ -98,6 +98,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.UnitTests.Services
                 {
                     AdminMemberId = Guid.NewGuid(),
                     EventTitle = "Test Event",
+                    EventFormat = "InPerson",
                     FirstName = "Hikkelokke",
                     CalendarEventId = Guid.NewGuid(),
                     StartDate = DateTime.UtcNow

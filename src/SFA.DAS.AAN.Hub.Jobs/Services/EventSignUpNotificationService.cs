@@ -106,14 +106,16 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         {
             var manageEventUrl = _applicationConfiguration.AdminAanBaseUrl.ToString() + "events/" + n.CalendarEventId.ToString();
             var eventDates = GetCalendarDateFormat(n.StartDate, n.EndDate);
+            var ambassadors = (n.NewAmbassadorsCount > 1) ? "ambassadors" : "ambassador";
+            var eventFormat = (n.EventFormat.Equals("InPerson")) ? "In Person" : n.EventFormat;
 
             sb.AppendLine($"# {n.EventTitle}");
             sb.AppendLine();
-            sb.AppendLine($"{n.EventFormat} event");
+            sb.AppendLine($"{eventFormat} event");
             sb.AppendLine($"{n.CalendarName}");
             sb.AppendLine($"{eventDates}");
             sb.AppendLine();
-            sb.AppendLine($"^ {n.NewAmbassadorsCount} new ambassadors signed up ({n.TotalAmbassadorsCount} total signed up)");
+            sb.AppendLine($"^ {n.NewAmbassadorsCount} new {ambassadors} signed up ({n.TotalAmbassadorsCount} total signed up)");
             sb.AppendLine();
             sb.AppendLine($"[Manage event]({manageEventUrl})");
             sb.AppendLine();
