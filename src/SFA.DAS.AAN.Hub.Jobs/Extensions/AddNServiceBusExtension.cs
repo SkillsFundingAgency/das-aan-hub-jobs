@@ -23,16 +23,16 @@ internal static class AddNServiceBusExtension
         configuration.GetSection(nameof(NServiceBusConfiguration)).Bind(nServiceBusConfiguration);
 
         var endpointConfiguration = new EndpointConfiguration(EndpointName)
-                .UseErrorQueue($"{EndpointName}-errors")
-                //.UseInstallers()
-                .UseMessageConventions()
-                .UseNewtonsoftJsonSerializer();
+            //.UseErrorQueue($"{EndpointName}-errors")
+            //.UseInstallers()
+            .UseMessageConventions();
+                //.UseNewtonsoftJsonSerializer();
 
         //var endpointConfiguration = new EndpointConfiguration(EndpointName);
         endpointConfiguration.EnableInstallers();
-        //endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
+        endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
         //endpointConfiguration.Conventions();
-        //endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
+        endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
         {
