@@ -1,6 +1,8 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.ApplicationInsights;
 using SFA.DAS.AAN.Hub.Data.Extensions;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.AAN.Hub.Jobs.Extensions;
@@ -23,6 +25,12 @@ var host = new HostBuilder()
             .AddAanDataContext(context.Configuration)
             .ConfigureHttpClients(context.Configuration)
             .AddApplicationRegistrations()
+            .AddLogging(options =>
+            {
+                options.AddApplicationInsights();
+                options.AddFilter<ApplicationInsightsLoggerProvider>("SFA.DAS", LogLevel.Information);
+                options.AddFilter<ApplicationInsightsLoggerProvider>("Microsoft", LogLevel.Warning);
+            })
             .AddNServiceBus(context.Configuration);
     })
     .Build();
