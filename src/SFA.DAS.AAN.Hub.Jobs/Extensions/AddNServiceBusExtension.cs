@@ -3,11 +3,13 @@ using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
+using SFA.DAS.NServiceBus;
 using SFA.DAS.NServiceBus.Configuration;
 using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
 using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
 
@@ -18,20 +20,13 @@ internal static class AddNServiceBusExtension
     public const string EndpointName = "SFA.DAS.AAN.Hub.Jobs";
     public static void AddNServiceBus(this IServiceCollection services, IConfiguration configuration)
     {
-
         NServiceBusConfiguration nServiceBusConfiguration = new();
         configuration.GetSection(nameof(NServiceBusConfiguration)).Bind(nServiceBusConfiguration);
 
-        var endpointConfiguration = new EndpointConfiguration(EndpointName)
-            //.UseErrorQueue($"{EndpointName}-errors")
-            //.UseInstallers()
-            .UseMessageConventions();
-                //.UseNewtonsoftJsonSerializer();
-
-        //var endpointConfiguration = new EndpointConfiguration(EndpointName);
+        var endpointConfiguration = new EndpointConfiguration(EndpointName);
         endpointConfiguration.EnableInstallers();
         endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
-        //endpointConfiguration.Conventions();
+        endpointConfiguration.WithMessageConventions();
         endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
@@ -80,5 +75,15 @@ public static class RoutingSettingsExtensions
     public static void AddRouting(this RoutingSettings routingSettings)
     {
         routingSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
+    }
+}
+
+public static class MessageConventions
+{
+    public static void WithMessageConventions(this EndpointConfiguration config)
+    {
+        var conventionsBuilder = config.Conventions();
+        conventionsBuilder.DefiningCommandsAs(t => Regex.IsMatch(t.Name, "Command(V\\d+)?$") || typeof(Command).IsAssignableFrom(t));
+        conventionsBuilder.DefiningEventsAs(t => Regex.IsMatch(t.Name, "Event(V\\d+)?$") || typeof(Event).IsAssignableFrom(t));
     }
 }
