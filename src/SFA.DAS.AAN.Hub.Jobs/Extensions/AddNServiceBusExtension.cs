@@ -30,7 +30,7 @@ internal static class AddNServiceBusExtension
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
         {
-            endpointConfiguration.UseLicense(nServiceBusConfiguration.NServiceBusLicense);
+            endpointConfiguration.License(nServiceBusConfiguration.NServiceBusLicense);
         }
 
         endpointConfiguration.SendOnly();
