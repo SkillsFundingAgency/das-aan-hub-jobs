@@ -4,7 +4,6 @@ using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
 using SFA.DAS.NServiceBus;
-using SFA.DAS.NServiceBus.Configuration;
 using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -25,7 +24,7 @@ internal static class AddNServiceBusExtension
         var endpointConfiguration = new EndpointConfiguration(EndpointName);
         endpointConfiguration.EnableInstallers();
         endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
-        endpointConfiguration.WithMessageConventions();
+        endpointConfiguration.UseDasMessageConventions();
         endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
@@ -79,10 +78,31 @@ public static class RoutingSettingsExtensions
 
 public static class MessageConventions
 {
-    public static void WithMessageConventions(this EndpointConfiguration config)
+    //public static void WithMessageConventions(this EndpointConfiguration config)
+    //{
+    //    var conventionsBuilder = config.Conventions();
+    //    conventionsBuilder.DefiningCommandsAs(t => Regex.IsMatch(t.Name, "Command(V\\d+)?$") || typeof(Command).IsAssignableFrom(t));
+    //    conventionsBuilder.DefiningEventsAs(t => Regex.IsMatch(t.Name, "Event(V\\d+)?$") || typeof(Event).IsAssignableFrom(t));
+    //}
+
+    public static EndpointConfiguration UseDasMessageConventions(this EndpointConfiguration endpointConfiguration)
     {
-        var conventionsBuilder = config.Conventions();
-        conventionsBuilder.DefiningCommandsAs(t => Regex.IsMatch(t.Name, "Command(V\\d+)?$") || typeof(Command).IsAssignableFrom(t));
-        conventionsBuilder.DefiningEventsAs(t => Regex.IsMatch(t.Name, "Event(V\\d+)?$") || typeof(Event).IsAssignableFrom(t));
+        endpointConfiguration.Conventions()
+            .DefiningMessagesAs(IsMessage)
+            .DefiningEventsAs(IsEvent)
+            .DefiningCommandsAs(IsCommand);
+
+        return endpointConfiguration;
     }
+
+    public static bool IsMessage(Type t) => IsSfaMessage(t, "Messages");
+
+    public static bool IsEvent(Type t) => IsSfaMessage(t, "Messages.Events");
+
+    public static bool IsCommand(Type t) => IsSfaMessage(t, "Messages.Commands");
+
+    public static bool IsSfaMessage(Type t, string namespaceSuffix)
+        => t.Namespace != null &&
+           t.Namespace.StartsWith("SFA.DAS") &&
+           t.Namespace.EndsWith(namespaceSuffix);
 }
