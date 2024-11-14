@@ -3,10 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using SFA.DAS.NServiceBus;
-using SFA.DAS.NServiceBus.Configuration;
-using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
-using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
@@ -31,7 +27,7 @@ internal static class AddNServiceBusExtension
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
         {
-            endpointConfiguration.UseLicense(nServiceBusConfiguration.NServiceBusLicense);
+            endpointConfiguration.License(nServiceBusConfiguration.NServiceBusLicense);
         }
 
         endpointConfiguration.SendOnly();
@@ -52,7 +48,8 @@ internal static class AddNServiceBusExtension
         }
         else
         {
-            endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
+            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+            transport.Routing().AddRouting();
             startServiceBusEndpoint = true;
         }
 
@@ -83,7 +80,7 @@ public static class MessageConventions
     public static void WithMessageConventions(this EndpointConfiguration config)
     {
         var conventionsBuilder = config.Conventions();
-        conventionsBuilder.DefiningCommandsAs(t => Regex.IsMatch(t.Name, "Command(V\\d+)?$") || typeof(Command).IsAssignableFrom(t));
-        conventionsBuilder.DefiningEventsAs(t => Regex.IsMatch(t.Name, "Event(V\\d+)?$") || typeof(Event).IsAssignableFrom(t));
+        conventionsBuilder.DefiningCommandsAs(t => Regex.IsMatch(t.Name, "Command(V\\d+)?$") || typeof(ICommand).IsAssignableFrom(t));
+        conventionsBuilder.DefiningEventsAs(t => Regex.IsMatch(t.Name, "Event(V\\d+)?$") || typeof(IEvent).IsAssignableFrom(t));
     }
 }
