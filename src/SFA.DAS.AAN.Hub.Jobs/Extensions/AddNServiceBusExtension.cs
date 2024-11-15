@@ -48,7 +48,11 @@ internal static class AddNServiceBusExtension
         }
         else
         {
-            endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
+            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+            transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
+            
+            var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
+            transport.ConnectionString(connectionString);
             startServiceBusEndpoint = true;
         }
 
@@ -68,10 +72,10 @@ public static class RoutingSettingsExtensions
 {
     public const string NotificationsMessageHandler = "SFA.DAS.Notifications.MessageHandlers";
 
-    public static void AddRouting(this RoutingSettings routingSettings)
-    {
-        routingSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
-    }
+    //public static void AddRouting(this RoutingSettings routingSettings)
+    //{
+    //    routingSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
+    //}
 }
 
 public static class MessageConventions
