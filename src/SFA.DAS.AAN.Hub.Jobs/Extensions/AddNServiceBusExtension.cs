@@ -3,9 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using SFA.DAS.NServiceBus.Configuration;
-using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
-using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
@@ -16,21 +13,21 @@ internal static class AddNServiceBusExtension
 {
     public const string NotificationsQueue = "SFA.DAS.Notifications.MessageHandlers";
     public const string EndpointName = "SFA.DAS.AAN.Hub.Jobs";
+
     public static void AddNServiceBus(this IServiceCollection services, IConfiguration configuration)
     {
-
         NServiceBusConfiguration nServiceBusConfiguration = new();
         configuration.GetSection(nameof(NServiceBusConfiguration)).Bind(nServiceBusConfiguration);
 
-        var endpointConfiguration = new EndpointConfiguration(EndpointName)
-                .UseErrorQueue($"{EndpointName}-errors")
-                .UseInstallers()
-                .UseMessageConventions()
-                .UseNewtonsoftJsonSerializer();
+        var endpointConfiguration = new EndpointConfiguration(EndpointName);
+        endpointConfiguration.EnableInstallers();
+        endpointConfiguration.SendFailedMessagesTo($"{EndpointName}-errors");
+        endpointConfiguration.UseDasMessageConventions();
+        endpointConfiguration.UseSerialization<NewtonsoftJsonSerializer>();
 
         if (!string.IsNullOrEmpty(nServiceBusConfiguration.NServiceBusLicense))
         {
-            endpointConfiguration.UseLicense(nServiceBusConfiguration.NServiceBusLicense);
+            endpointConfiguration.License(nServiceBusConfiguration.NServiceBusLicense);
         }
 
         endpointConfiguration.SendOnly();
@@ -43,7 +40,7 @@ internal static class AddNServiceBusExtension
             if (string.IsNullOrWhiteSpace(notificationJob) || notificationJob.Equals("false", StringComparison.OrdinalIgnoreCase))
             {
                 var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
-                transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), RoutingSettingsExtensions.NotificationsMessageHandler);
+                transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), NotificationsQueue);
                 var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
                 transport.ConnectionString(connectionString);
                 startServiceBusEndpoint = true;
@@ -51,7 +48,10 @@ internal static class AddNServiceBusExtension
         }
         else
         {
-            endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
+            var transport = endpointConfiguration.UseTransport<AzureServiceBusTransport>();
+            transport.Routing().RouteToEndpoint(typeof(SendEmailCommand), NotificationsQueue);
+            var connectionString = nServiceBusConfiguration.NServiceBusConnectionString;
+            transport.ConnectionString(connectionString);
             startServiceBusEndpoint = true;
         }
 
@@ -63,16 +63,29 @@ internal static class AddNServiceBusExtension
                 .AddSingleton(p => endpointInstance)
                 .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
         }
-
     }
 }
 
-public static class RoutingSettingsExtensions
+public static class MessageConventions
 {
-    public const string NotificationsMessageHandler = "SFA.DAS.Notifications.MessageHandlers";
-
-    public static void AddRouting(this RoutingSettings routingSettings)
+    public static EndpointConfiguration UseDasMessageConventions(this EndpointConfiguration endpointConfiguration)
     {
-        routingSettings.RouteToEndpoint(typeof(SendEmailCommand), NotificationsMessageHandler);
+        endpointConfiguration.Conventions()
+            .DefiningMessagesAs(IsMessage)
+            .DefiningEventsAs(IsEvent)
+            .DefiningCommandsAs(IsCommand);
+
+        return endpointConfiguration;
     }
+
+    public static bool IsMessage(Type t) => IsSfaMessage(t, "Messages");
+
+    public static bool IsEvent(Type t) => IsSfaMessage(t, "Messages.Events");
+
+    public static bool IsCommand(Type t) => IsSfaMessage(t, "Messages.Commands");
+
+    public static bool IsSfaMessage(Type t, string namespaceSuffix)
+        => t.Namespace != null &&
+           t.Namespace.StartsWith("SFA.DAS") &&
+           t.Namespace.EndsWith(namespaceSuffix);
 }

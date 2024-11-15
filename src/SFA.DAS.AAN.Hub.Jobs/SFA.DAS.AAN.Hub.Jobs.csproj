@@ -11,13 +11,15 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.12.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.64.1" />
     <PackageReference Include="RestEase" Version="1.6.4" />
     <PackageReference Include="RestEase.HttpClientFactory" Version="1.6.4" />
     <PackageReference Include="SFA.DAS.Api.Common" Version="17.1.88" />
     <PackageReference Include="SFA.DAS.Configuration.AzureTableStorage" Version="3.0.84" />
     <PackageReference Include="SFA.DAS.Notifications.Messages" Version="3.0.10" />
-    <PackageReference Include="SFA.DAS.NServiceBus" Version="17.0.49" />
+    <PackageReference Include="NServiceBus.Newtonsoft.Json" Version="2.4.0" />
+    <PackageReference Include="NServiceBus.Transport.AzureServiceBus" Version="2.0.2" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.1.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.17.2" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.21.0" />
