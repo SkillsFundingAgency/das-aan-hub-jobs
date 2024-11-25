@@ -37,11 +37,13 @@ In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.
     "EnvironmentName": "LOCAL",
     "SendNotificationsFunctionSchedule": "0 */3 * * * *",
     "MemberDataCleanupFunctionSchedule": "0 */3 * * * *",
-    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 0 * * *"
+    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 0 * * *",
+    "EventSignUpNotificationFunctionSchedule": "0 0 15 * * *"
   },
   "AzureWebJobs.SendNotificationsFunction.Disabled": "false",
   "AzureWebJobs.MemberDataCleanupFunction.Disabled": "false",
-  "AzureWebJobs.SynchroniseApprenticeDetailsFunction.Disabled": "false"
+  "AzureWebJobs.SynchroniseApprenticeDetailsFunction.Disabled": "false",
+  "AzureWebJobs.EventSignUpNotificationFunctionSchedule.Disabled": "true"
 }
 ```
 When actively developing a function, it may be a good idea to disable other functions by adding `"AzureWebJobs.<function-name>.Disabled": "true"` to the local config, example seen above. 
