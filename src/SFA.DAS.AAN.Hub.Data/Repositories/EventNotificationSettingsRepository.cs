@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
+using static SFA.DAS.AAN.Hub.Data.Dto.EventNotificationSettings;
 
 namespace SFA.DAS.AAN.Hub.Data.Repositories;
 
@@ -15,10 +16,11 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
 
     public async Task<List<EventNotificationSettings>> GetEventNotificationSettings()
     {
-        // criteria: all members that are of type Employer and have ReceiveNotifications set to YES
         return await _context.Members
             .AsNoTracking()
             .Where(m => m.UserType == Entities.UserType.Employer && m.ReceiveNotifications == true)
+            .Include(m => m.MemberNotificationEventFormats)
+            .Include(m => m.MemberNotificationLocations)
             .Select(a => new EventNotificationSettings
             {
                 MemberDetails = new MemberDetails 
@@ -27,9 +29,20 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
                     FirstName = a.FirstName,
                     Email = a.Email
                 },
-                ReceiveNotifications = a.ReceiveNotifications
+                ReceiveNotifications = a.ReceiveNotifications,
+                EventTypes = a.MemberNotificationEventFormats.Select(e => new NotificationEventType
+                {
+                    EventType = e.EventFormat,
+                    ReceiveNotifications = a.ReceiveNotifications
+                }).ToList(),
+                Locations = a.MemberNotificationLocations.Select(loc => new Location
+                {
+                    Name = loc.Name,
+                    Radius = loc.Radius,
+                    Latitude = loc.Latitude,
+                    Longitude = loc.Longitude
+                }).ToList()
             })
             .ToListAsync();
     }
-
 }
