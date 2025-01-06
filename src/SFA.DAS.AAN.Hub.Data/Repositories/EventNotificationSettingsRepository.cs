@@ -21,6 +21,7 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
             .Where(m => m.UserType == Entities.UserType.Employer && m.ReceiveNotifications == true)
             .Include(m => m.MemberNotificationEventFormats)
             .Include(m => m.MemberNotificationLocations)
+            .AsSplitQuery()
             .Select(a => new EventNotificationSettings
             {
                 MemberDetails = new MemberDetails 
