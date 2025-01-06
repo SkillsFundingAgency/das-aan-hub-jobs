@@ -17,13 +17,13 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
         }
 
         [Function(nameof(EventNotificationsFunction))]
-        public async Task Run([TimerTrigger("%EmployerEventNotificationsFunction%", RunOnStartup = false)] TimerInfo timer, CancellationToken cancellationToken)
+        public async Task Run([TimerTrigger("%EventNotificationFunctionSchedule%", RunOnStartup = false)] TimerInfo timer, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("EmployerEventNotificationsFunction has been triggered.");
+            _logger.LogInformation("EventNotificationFunctionSchedule has been triggered.");
 
             var count = await _notificationService.ProcessEventNotifications(cancellationToken);
 
-            _logger.LogInformation("Processed {count} Event SignUp Notifications", count);
+            _logger.LogInformation("Processed {count} Event Notifications", count);
         }
     }
 }
