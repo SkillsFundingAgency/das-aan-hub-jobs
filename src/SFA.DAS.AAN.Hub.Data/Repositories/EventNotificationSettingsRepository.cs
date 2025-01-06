@@ -14,7 +14,7 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
         _context = context;
     }
 
-    public async Task<List<EventNotificationSettings>> GetEventNotificationSettings()
+    public async Task<List<EventNotificationSettings>> GetEventNotificationSettingsAsync(CancellationToken cancellationToken)
     {
         return await _context.Members
             .AsNoTracking()
@@ -43,6 +43,6 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
                     Longitude = loc.Longitude
                 }).ToList()
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 }

@@ -11,6 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -46,42 +47,42 @@ public class EventNotificationService : IEventNotificationService
 
         if (notificationSettings.Count == 0) return 0;
 
-        var notificationPerEmployer = notificationSettings.GroupBy(s => s.MemberDetails.Id);
+        //var notificationPerEmployer = notificationSettings.GroupBy(s => s.MemberDetails.Id);
 
-        var tasks = notificationPerEmployer.Select(group => SendEventNotificationEmails(group.Key, group, cancellationToken));
+        var tasks = notificationSettings.Select(n => SendEventNotificationEmails(n, cancellationToken));
 
         await Task.WhenAll(tasks);
 
         return notificationSettings.Count;
     }
 
-    private async Task SendEventNotificationEmails(Guid memberId, IEnumerable<EventNotificationSettings> notificationSettings, CancellationToken cancellationToken)
+    private async Task SendEventNotificationEmails(EventNotificationSettings notificationSettings, CancellationToken cancellationToken)
     {
         try
         {
             var command = CreateSendCommand(notificationSettings, cancellationToken);
-            _logger.LogInformation("Sending email to member {memberId}.", memberId);
+            _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
             await _messageSession.Send(command);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Sending email FAILED to {memberId}!", memberId);
+            _logger.LogError(ex, "Sending email FAILED to {memberId}!", notificationSettings.MemberDetails.Id);
         }
     }
 
-    private SendEmailCommand CreateSendCommand(IEnumerable<EventNotificationSettings> notificationSettings, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, CancellationToken cancellationToken)
     {
-        var targetEmail = notificationSettings.First().MemberDetails.Email;
-        var firstName = notificationSettings.First().MemberDetails.FirstName;
-        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "notification-settings"; // TODO
+        var targetEmail = notificationSetting.MemberDetails.Email;
+        var firstName = notificationSetting.MemberDetails.FirstName;
+        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "event-notification-settings"; // TODO
 
         var tokens = new Dictionary<string, string>
             {
                 { "first_name", firstName },
                 { "event_count", "1" }, // TODO
-                { "event_listing_snippet", GetEventListingSnippet(notificationSettings) },
-                { "event_formats_snippet", "TODO" },
-                { "locations_snippet", "TODO" },
+                { "event_listing_snippet", "TODO" }, // TODO
+                { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
+                { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
             };
 
@@ -90,6 +91,36 @@ public class EventNotificationService : IEventNotificationService
         return new SendEmailCommand(templateId, targetEmail, tokens);
     }
 
+    private string GetEventFormatsSnippet(EventNotificationSettings notificationSettings)
+    {
+        var sb = new StringBuilder();
+
+        foreach (var e in notificationSettings.EventTypes)
+        {
+            if (e.EventType == "InPerson")
+            {
+                sb.AppendLine($"* in-person events");
+                break;
+            }
+
+            sb.AppendLine($"* {e.EventType} events");
+        }
+
+        return sb.ToString();
+    }
+
+    private string GetLocationsSnippet(EventNotificationSettings notificationSettings)
+    {
+        var sb = new StringBuilder();
+
+        foreach (var loc in notificationSettings.Locations)
+        {
+            var locationText = loc.Radius == 0 ? "Across England" : $"* {loc.Name}, within {loc.Radius} miles";
+            sb.AppendLine(locationText);
+        }
+
+        return sb.ToString();
+    }
 
     private string GetEventListingSnippet(IEnumerable<EventNotificationSettings> notificationSettings)
     {
