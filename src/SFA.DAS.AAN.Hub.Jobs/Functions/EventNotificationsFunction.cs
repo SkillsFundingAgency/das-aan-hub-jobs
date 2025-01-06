@@ -8,9 +8,9 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
 {
     public class EventNotificationsFunction
     {
-        private readonly IEventSignUpNotificationService _notificationService;
-        private readonly ILogger<EventSignUpNotificationFunction> _logger;
-        public EventNotificationsFunction(IEventSignUpNotificationService notificationService, ILogger<EventSignUpNotificationFunction> logger)
+        private readonly IEventNotificationService _notificationService;
+        private readonly ILogger<EventNotificationsFunction> _logger;
+        public EventNotificationsFunction(IEventNotificationService notificationService, ILogger<EventNotificationsFunction> logger)
         {
             _notificationService = notificationService;
             _logger = logger;
@@ -21,7 +21,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
         {
             _logger.LogInformation("EmployerEventNotificationsFunction has been triggered.");
 
-            var count = await _notificationService.ProcessEventSignUpNotification(cancellationToken);
+            var count = await _notificationService.ProcessEventNotifications(cancellationToken);
 
             _logger.LogInformation("Processed {count} Event SignUp Notifications", count);
         }

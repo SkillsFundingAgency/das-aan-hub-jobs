@@ -28,6 +28,8 @@ namespace SFA.DAS.AAN.Hub.Jobs.IntegrationTests.EventSignUpNotification
                                                                           .With(ce => ce.StartDate, DateTime.UtcNow.AddHours(-2)) 
                                                                           .With(ce => ce.Member, _fixture.Build<Member>()
                                                                                                             .With(m => m.ReceiveNotifications, true)
+                                                                                                            .With(m => m.MemberNotificationEventFormats, new List<MemberNotificationEventFormat>())
+                                                                                                            .With(m => m.MemberNotificationLocations, new List<MemberNotificationLocation>())
                                                                                                             .Create())
                                                                           .Create())
                                       .CreateMany(1)
