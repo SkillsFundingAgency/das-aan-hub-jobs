@@ -16,7 +16,7 @@ public interface IOuterApiClient
     //[Get("/employeraccounts/{userId}")]
     //Task<GetEmployerUserAccountsResponse> GetUserAccounts([Path] string userId, [Query] string email, CancellationToken cancellationToken);
 
-    [Get("calendarEvents")]
+    [Get("CalendarEvents")]
     Task<GetCalendarEventsQueryResult> GetCalendarEvents([Header("X-RequestedByMemberId")] Guid requestedByMemberId, [QueryMap] IDictionary<string, string[]> parameters, CancellationToken cancellationToken);
 
 

@@ -34,7 +34,14 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
         {
             var outerApiConfig = configuration.GetSection(nameof(ApplicationConfiguration)).Get<ApplicationConfiguration>().AanOuterApiConfiguration;
 
-            services.AddRestEaseClient<IOuterApiClient>(outerApiConfig.ApiBaseUrl);
+            services.AddScoped<Http.MessageHandlers.DefaultHeadersHandler>();
+            services.AddScoped<Http.MessageHandlers.LoggingMessageHandler>();
+            services.AddScoped<Http.MessageHandlers.ApimHeadersHandler>();
+
+            services.AddRestEaseClient<IOuterApiClient>(outerApiConfig.ApiBaseUrl)
+                .AddHttpMessageHandler<Http.MessageHandlers.DefaultHeadersHandler>()
+                .AddHttpMessageHandler<Http.MessageHandlers.ApimHeadersHandler>()
+                .AddHttpMessageHandler<Http.MessageHandlers.LoggingMessageHandler>();
         }
     }
 }
