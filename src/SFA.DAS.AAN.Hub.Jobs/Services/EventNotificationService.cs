@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Entities;
+using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -26,17 +28,20 @@ public class EventNotificationService : IEventNotificationService
     private readonly ILogger<EventNotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
+    private readonly IOuterApiClient _outerApiClient;
 
     public EventNotificationService(
        IEventNotificationSettingsRepository memberRepository,
        IMessageSession messageSession,
        IOptions<ApplicationConfiguration> applicationConfigurationOptions,
-       ILogger<EventNotificationService> logger)
+       ILogger<EventNotificationService> logger,
+       IOuterApiClient outerApiClient)
     {
         _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _logger = logger;
+        _outerApiClient = outerApiClient;
     }
 
     public async Task<int> ProcessEventNotifications(CancellationToken cancellationToken)
@@ -48,6 +53,19 @@ public class EventNotificationService : IEventNotificationService
         if (notificationSettings.Count == 0) return 0;
 
         //var notificationPerEmployer = notificationSettings.GroupBy(s => s.MemberDetails.Id);
+        var firstNot = notificationSettings.First();
+        var eventListRequest = new GetNetworkEventsRequest 
+        {
+            Location = firstNot.Locations.First().Name,
+            EventFormat = new List<EventFormat> { EventFormat.Online },
+            Radius = firstNot.Locations[0].Radius,
+        };
+
+        var eventsQuery = BuildQueryStringParameters(eventListRequest);
+
+        var eventList = await _outerApiClient.GetCalendarEvents(firstNot.MemberDetails.Id, eventsQuery, cancellationToken);
+
+        _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, firstNot.Locations.First().Name);
 
         var tasks = notificationSettings.Select(n => SendEventNotificationEmails(n, cancellationToken));
 
@@ -74,7 +92,7 @@ public class EventNotificationService : IEventNotificationService
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
-        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "event-notification-settings"; // TODO
+        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + "TODO/" + "event-notification-settings"; // TODO
 
         var tokens = new Dictionary<string, string>
             {
@@ -129,5 +147,67 @@ public class EventNotificationService : IEventNotificationService
         // TODO
 
         return sb.ToString();
+    }
+
+    public static Dictionary<string, string[]> BuildQueryStringParameters(GetNetworkEventsRequest request)
+    {
+        Dictionary<string, string[]> dictionary = new Dictionary<string, string[]>();
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            dictionary.Add("keyword", new string[1] { request.Keyword.Trim() });
+        }
+
+        string text = "";
+        if (!string.IsNullOrWhiteSpace(request.Location))
+        {
+            dictionary.Add("location", new string[1] { request.Location });
+            dictionary.Add("radius", new string[1] { request.Radius.ToString() ?? string.Empty });
+            text = (string.IsNullOrWhiteSpace(request.OrderBy) ? "soonest" : request.OrderBy);
+        }
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            dictionary.Add("orderBy", new string[1] { text });
+        }
+
+        if (request.FromDate.HasValue)
+        {
+            dictionary.Add("fromDate", new string[1] { request.FromDate.Value.ToString("yyyy-MM-dd") });
+        }
+
+        if (request.ToDate.HasValue)
+        {
+            dictionary.Add("toDate", new string[1] { request.ToDate.Value.ToString("yyyy-MM-dd") });
+        }
+
+        dictionary.Add("eventFormat", request.EventFormat.Select((EventFormat format) => format.ToString()).ToArray());
+        dictionary.Add("calendarId", request.CalendarId.Select((int cal) => cal.ToString()).ToArray());
+        dictionary.Add("regionId", request.RegionId.Select((int region) => region.ToString()).ToArray());
+        if (request.Page.HasValue)
+        {
+            dictionary.Add("page", new string[1] { request.Page?.ToString() });
+        }
+
+        if (request.PageSize.HasValue)
+        {
+            dictionary.Add("pageSize", new string[1] { request.PageSize?.ToString() });
+        }
+
+        return dictionary;
+    }
+
+    public class GetNetworkEventsRequest
+    {
+        public string? Keyword { get; set; }
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public List<EventFormat> EventFormat { get; set; } = new List<EventFormat>();
+        public List<int> CalendarId { get; set; } = new List<int>();
+        public List<int> RegionId { get; set; } = new List<int>();
+        public int? Page { get; set; }
+        public int? PageSize { get; set; }
+        public string? Location { get; set; } = "";
+        public int? Radius { get; set; }
+        public string OrderBy { get; set; } = "";
     }
 }

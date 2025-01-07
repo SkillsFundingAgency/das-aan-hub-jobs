@@ -17,6 +17,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
             services.AddHttpClient();
 
             AddApprenticeAccountsApiClient(services, configuration);
+            AddOuterApiClient(services, configuration);
 
             return services;
         }
@@ -27,6 +28,13 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
 
             services.AddRestEaseClient<IApprenticeAccountsApiClient>(apiConfig.Url)
                 .AddHttpMessageHandler(() => new InnerApiAuthenticationHeaderHandler(new AzureClientCredentialHelper(), apiConfig.Identifier));
+        }
+
+        private static void AddOuterApiClient(IServiceCollection services, IConfiguration configuration)
+        {
+            var outerApiConfig = configuration.GetSection(nameof(ApplicationConfiguration)).Get<ApplicationConfiguration>().AanOuterApiConfiguration;
+
+            services.AddRestEaseClient<IOuterApiClient>(outerApiConfig.ApiBaseUrl);
         }
     }
 }
