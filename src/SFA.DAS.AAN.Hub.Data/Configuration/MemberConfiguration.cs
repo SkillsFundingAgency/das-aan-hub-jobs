@@ -17,6 +17,8 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
         builder.Property(m => m.Status).HasConversion(new EnumToStringConverter<MemberStatus>());
         builder.HasMany(m => m.MemberProfiles).WithOne(mp => mp.Member);
         builder.HasMany(m => m.MemberPreferences).WithOne(mp => mp.Member);
+        builder.HasMany(m => m.MemberNotificationEventFormats).WithOne(frmt => frmt.Member);
+        builder.HasMany(m => m.MemberNotificationLocations).WithOne(loc => loc.Member);
         builder.HasMany(m => m.Notifications).WithOne(n => n.Member);
         builder.HasMany(m => m.Audits).WithOne(a => a.Member).HasForeignKey(a => a.ActionedBy);
         builder.HasOne(m => m.Apprentice).WithOne(a => a.Member);

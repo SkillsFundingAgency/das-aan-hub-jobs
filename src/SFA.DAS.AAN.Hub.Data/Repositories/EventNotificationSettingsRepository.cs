@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SFA.DAS.AAN.Hub.Data.Dto;
+using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using static SFA.DAS.AAN.Hub.Data.Dto.EventNotificationSettings;
 
@@ -18,7 +19,7 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
     {
         return await _context.Members
             .AsNoTracking()
-            .Where(m => m.UserType == Entities.UserType.Employer && m.ReceiveNotifications == true)
+            .Where(m => (m.UserType == UserType.Employer && m.ReceiveNotifications == true))
             .Include(m => m.MemberNotificationEventFormats)
             .Include(m => m.MemberNotificationLocations)
             .AsSplitQuery()
