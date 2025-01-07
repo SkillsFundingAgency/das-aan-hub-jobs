@@ -34,7 +34,7 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
                 EventTypes = a.MemberNotificationEventFormats.Select(e => new NotificationEventType
                 {
                     EventType = e.EventFormat,
-                    ReceiveNotifications = a.ReceiveNotifications
+                    ReceiveNotifications = e.ReceiveNotifications
                 }).ToList(),
                 Locations = a.MemberNotificationLocations.Select(loc => new Location
                 {
