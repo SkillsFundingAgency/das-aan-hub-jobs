@@ -14,6 +14,7 @@ using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 using Microsoft.AspNetCore.Mvc;
+using Grpc.Core;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -53,19 +54,19 @@ public class EventNotificationService : IEventNotificationService
         if (notificationSettings.Count == 0) return 0;
 
         //var notificationPerEmployer = notificationSettings.GroupBy(s => s.MemberDetails.Id);
-        var firstNot = notificationSettings.First();
-        var eventListRequest = new GetNetworkEventsRequest 
-        {
-            Location = firstNot.Locations.First().Name,
-            EventFormat = new List<EventFormat> { EventFormat.Online },
-            Radius = firstNot.Locations[0].Radius,
-        };
+        //var firstNot = notificationSettings.First();
+        //var eventListRequest = new GetNetworkEventsRequest 
+        //{
+        //    Location = firstNot.Locations.First().Name,
+        //    EventFormat = new List<EventFormat> { EventFormat.Online },
+        //    Radius = firstNot.Locations[0].Radius,
+        //};
 
-        var eventsQuery = BuildQueryStringParameters(eventListRequest);
+        //var eventsQuery = BuildQueryStringParameters(eventListRequest);
 
-        var eventList = await _outerApiClient.GetCalendarEvents(firstNot.MemberDetails.Id, eventsQuery, cancellationToken);
+        //var eventList = await _outerApiClient.GetCalendarEvents(firstNot.MemberDetails.Id, eventsQuery, cancellationToken);
 
-        _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, firstNot.Locations.First().Name);
+        //_logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, firstNot.Locations.First().Name);
 
         var tasks = notificationSettings.Select(n => SendEventNotificationEmails(n, cancellationToken));
 
@@ -78,7 +79,49 @@ public class EventNotificationService : IEventNotificationService
     {
         try
         {
-            var command = CreateSendCommand(notificationSettings, cancellationToken);
+            // GETTING EVENTS
+            //var eventFormats = notificationSettings.EventTypes.Select(x => (Enum.TryParse(x.EventType, out EventFormat format)));
+            var eventFormats = notificationSettings.EventTypes.Select(x =>
+            {
+                if (Enum.TryParse(x.EventType, ignoreCase: true, out EventFormat format))
+                {
+                    return (EventFormat?)format; // Return the parsed enum if successful
+                }
+                return null; // Return null if parsing failed
+            })
+            .Where(format => format.HasValue) // Filter out nulls (failed parses)
+            .Cast<EventFormat>() // Convert the result to a list of enums
+            .ToList();
+
+            var eventListingForAllLocations = new List<EventListingDTO>(); // need a new type to have location name radius and the events
+
+            // for each location, get a list of events..
+            foreach (var locationSetting in notificationSettings.Locations)
+            {
+                var request = new GetNetworkEventsRequest
+                {
+                    Location = locationSetting.Name,
+                    EventFormat = eventFormats,
+                    Radius = locationSetting.Radius,
+                };
+
+                var eventsQuery = BuildQueryStringParameters(request);
+
+                var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
+
+                _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+
+                eventListingForAllLocations.Add(new EventListingDTO 
+                {
+                    TotalCount = eventList.TotalCount,
+                    CalendarEvents = eventList.CalendarEvents,
+                    Location = locationSetting.Name,
+                    Radius = locationSetting.Radius
+                });
+            }
+
+            // SENDER
+            var command = CreateSendCommand(notificationSettings, eventListingForAllLocations, cancellationToken);
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
             await _messageSession.Send(command);
         }
@@ -88,7 +131,7 @@ public class EventNotificationService : IEventNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, CancellationToken cancellationToken)
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
@@ -98,7 +141,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 { "first_name", firstName },
                 { "event_count", "1" }, // TODO
-                { "event_listing_snippet", "TODO" }, // TODO
+                { "event_listing_snippet", GetEventListingSnippet(events) }, // TODO
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
@@ -140,11 +183,27 @@ public class EventNotificationService : IEventNotificationService
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(IEnumerable<EventNotificationSettings> notificationSettings)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListingPerLocation)
     {
         var sb = new StringBuilder();
 
-        // TODO
+        foreach (var e in eventListingPerLocation) 
+        {
+            var locationText = e.Radius == 0 ? "Across England" : $"* {e.Location}, within {e.Radius} miles";
+            sb.AppendLine(locationText);
+
+            foreach (var calendarEvent in e.CalendarEvents)
+            {
+                sb.AppendLine(calendarEvent.CalendarName);
+                sb.AppendLine(calendarEvent.Summary);
+                sb.AppendLine($"Date: {calendarEvent.Start.ToString()}");
+                sb.AppendLine($"Time: {calendarEvent.Start.ToString()}");
+                sb.AppendLine($"Where: {calendarEvent.Location.ToString()}");
+                sb.AppendLine($"Distance: {calendarEvent.Distance.ToString()}");
+                sb.AppendLine($"EventType: {calendarEvent.EventFormat.ToString()}");
+                sb.AppendLine("---");
+            }
+        }
 
         return sb.ToString();
     }
@@ -209,5 +268,13 @@ public class EventNotificationService : IEventNotificationService
         public string? Location { get; set; } = "";
         public int? Radius { get; set; }
         public string OrderBy { get; set; } = "";
+    }
+
+    public class EventListingDTO
+    {
+        public int TotalCount { get; set; }
+        public IEnumerable<CalendarEventSummary> CalendarEvents { get; set; } = [];
+        public string? Location { get; set; } = "";
+        public int? Radius { get; set; }
     }
 }
