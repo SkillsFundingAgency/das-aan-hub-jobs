@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Helpers;
+using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -130,28 +131,90 @@ public class EventNotificationService : IEventNotificationService
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(List<EventListingDTO> eventListingPerLocation)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListings)
     {
         var sb = new StringBuilder();
 
-        foreach (var e in eventListingPerLocation) 
-        {
-            var locationText = e.Radius == 0 ? "Across England" : $"* {e.Location}, within {e.Radius} miles";
-            sb.AppendLine(locationText);
+        // Separate events into In-Person/Hybrid and Online
+        var inPersonAndHybridEvents = eventListings
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+            .ToList();
 
-            foreach (var calendarEvent in e.CalendarEvents)
+        var onlineEvents = eventListings
+            .Where(e => e.CalendarEvents.All(ev => ev.EventFormat == EventFormat.Online))
+            .ToList();
+
+        // Calculate total counts for each group
+        var inPersonAndHybridTotalCount = inPersonAndHybridEvents
+            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
+
+        var onlineTotalCount = onlineEvents
+            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
+
+        // Process In-Person and Hybrid Events
+        if (inPersonAndHybridEvents.Any())
+        {
+            sb.AppendLine($"Event Type: In-Person and Hybrid ({inPersonAndHybridTotalCount} events)");
+            foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                sb.AppendLine(calendarEvent.CalendarName);
-                sb.AppendLine(calendarEvent.Summary);
-                sb.AppendLine($"Date: {calendarEvent.Start.ToString()}");
-                sb.AppendLine($"Time: {calendarEvent.Start.ToString()}");
-                sb.AppendLine($"Where: {calendarEvent.Location.ToString()}");
-                sb.AppendLine($"Distance: {calendarEvent.Distance.ToString()}");
-                sb.AppendLine($"EventType: {calendarEvent.EventFormat.ToString()}");
-                sb.AppendLine("---");
+                AppendLocationEvents(sb, locationEvents, EventFormat.InPerson, EventFormat.Hybrid);
+            }
+        }
+
+        // Process Online Events
+        if (onlineEvents.Any())
+        {
+            sb.AppendLine($"Event Type: Online Events ({onlineTotalCount} events)");
+            foreach (var locationEvents in onlineEvents)
+            {
+                AppendLocationEvents(sb, locationEvents, EventFormat.Online);
             }
         }
 
         return sb.ToString();
+    }
+
+
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, params EventFormat[] formatsToInclude)
+    {
+        var filteredEvents = locationEvents.CalendarEvents
+            .Where(ev => formatsToInclude.Contains(ev.EventFormat))
+            .ToList();
+
+        if (!filteredEvents.Any())
+            return;
+
+        var locationText = locationEvents.Radius == 0
+            ? $"Across England ({filteredEvents.Count} events)"
+            : $"{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+        sb.AppendLine(locationText);
+
+        var maxEventsPerLocation = 3;
+        var eventsDisplayed = 0;
+
+        foreach (var calendarEvent in filteredEvents)
+        {
+            if (eventsDisplayed >= maxEventsPerLocation)
+            {
+                sb.AppendLine($"^ Only showing {maxEventsPerLocation} events for this location. See all {filteredEvents.Count} events for this location.");
+                break;
+            }
+
+            sb.AppendLine(calendarEvent.CalendarName);
+            sb.AppendLine(calendarEvent.Summary);
+            sb.AppendLine($"Date: {calendarEvent.Start}");
+            sb.AppendLine($"Time: {calendarEvent.Start}");
+            sb.AppendLine($"Where: {calendarEvent.Location}");
+            if (calendarEvent.EventFormat != EventFormat.Online)
+            {
+                sb.AppendLine($"Distance: {calendarEvent.Distance}");
+            }
+            sb.AppendLine($"EventType: {calendarEvent.EventFormat}");
+            sb.AppendLine("---");
+
+            eventsDisplayed++;
+        }
+
+        sb.AppendLine();
     }
 }
