@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Services;
 using System.Diagnostics.CodeAnalysis;
 
@@ -12,6 +13,7 @@ public static class AddApplicationRegistrationsExtension
         services.AddTransient<IEventSignUpNotificationService, EventSignUpNotificationService>();
         services.AddTransient<IEventNotificationService, EventNotificationService>();
         services.AddTransient<INotificationService, NotificationService>();
+        services.AddTransient<IEventQueryService, EventQueryService>();
         services.AddTransient<IMemberDataCleanupService, MemberDataCleanupService>();
         services.AddTransient<ISynchroniseApprenticeDetailsService, SynchroniseApprenticeDetailsService>();
         return services;
