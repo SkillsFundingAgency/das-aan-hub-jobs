@@ -66,11 +66,10 @@ public class EventNotificationService : IEventNotificationService
 
             var eventListings = await _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
 
-            var totalCount = eventListings.Sum(e => e.TotalCount);
+            var command = CreateSendCommand(notificationSettings, eventListings, cancellationToken);
 
-            // SENDER
-            var command = CreateSendCommand(notificationSettings, eventListings, totalCount, cancellationToken);
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+
             await _messageSession.Send(command);
         }
         catch (Exception ex)
@@ -79,16 +78,17 @@ public class EventNotificationService : IEventNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, int numberOfEvents, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, CancellationToken cancellationToken)
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
         var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + "TODO/" + "event-notification-settings"; // TODO
+        var eventCount = events.Sum(e => e.TotalCount);
 
         var tokens = new Dictionary<string, string>
             {
                 { "first_name", firstName },
-                { "event_count", numberOfEvents.ToString() }, // TODO
+                { "event_count", eventCount.ToString() },
                 { "event_listing_snippet", GetEventListingSnippet(events) }, // TODO
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
@@ -135,7 +135,6 @@ public class EventNotificationService : IEventNotificationService
     {
         var sb = new StringBuilder();
 
-        // Separate events into In-Person/Hybrid and Online
         var inPersonAndHybridEvents = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
             .ToList();
@@ -144,7 +143,6 @@ public class EventNotificationService : IEventNotificationService
             .Where(e => e.CalendarEvents.All(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        // Calculate total counts for each group
         var inPersonAndHybridTotalCount = inPersonAndHybridEvents
             .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
 
