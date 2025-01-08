@@ -5,6 +5,7 @@ using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 using SFA.DAS.AAN.Hub.Jobs.Authentication;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Api.Common.Infrastructure;
+using SFA.DAS.Http.Configuration;
 using System.Diagnostics.CodeAnalysis;
 
 namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
@@ -33,6 +34,8 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
         private static void AddOuterApiClient(IServiceCollection services, IConfiguration configuration)
         {
             var outerApiConfig = configuration.GetSection(nameof(ApplicationConfiguration)).Get<ApplicationConfiguration>().AanOuterApiConfiguration;
+
+            services.AddTransient<IApimClientConfiguration>((_) => outerApiConfig);
 
             services.AddScoped<Http.MessageHandlers.DefaultHeadersHandler>();
             services.AddScoped<Http.MessageHandlers.LoggingMessageHandler>();
