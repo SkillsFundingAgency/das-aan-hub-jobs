@@ -112,7 +112,7 @@ public class EventNotificationService : IEventNotificationService
                 break;
             }
 
-            sb.AppendLine($"* {e.EventType} events");
+            sb.AppendLine($"* {e.EventType.ToLower()} events");
         }
 
         return sb.ToString();
@@ -152,7 +152,9 @@ public class EventNotificationService : IEventNotificationService
         // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
-            sb.AppendLine($"Event Type: In-Person and Hybrid ({inPersonAndHybridTotalCount} events)");
+            sb.AppendLine($"##In-person and hybrid ({inPersonAndHybridTotalCount} events)");
+            sb.AppendLine();
+
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
                 AppendLocationEvents(sb, locationEvents, EventFormat.InPerson, EventFormat.Hybrid);
@@ -162,7 +164,9 @@ public class EventNotificationService : IEventNotificationService
         // Process Online Events
         if (onlineEvents.Any())
         {
-            sb.AppendLine($"Event Type: Online Events ({onlineTotalCount} events)");
+            sb.AppendLine($"##Online events ({onlineTotalCount} events)");
+            sb.AppendLine();
+
             foreach (var locationEvents in onlineEvents)
             {
                 AppendLocationEvents(sb, locationEvents, EventFormat.Online);
@@ -183,34 +187,43 @@ public class EventNotificationService : IEventNotificationService
             return;
 
         var locationText = locationEvents.Radius == 0
-            ? $"Across England ({filteredEvents.Count} events)"
-            : $"{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+            ? $"#Across England ({filteredEvents.Count} events)"
+            : $"#{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
         sb.AppendLine(locationText);
+        sb.AppendLine();
 
         var maxEventsPerLocation = 3;
         var eventsDisplayed = 0;
 
         foreach (var calendarEvent in filteredEvents)
         {
+            var calendarEventUrl = "https://www.gov.uk/example"; // TODO
+
+            sb.AppendLine($"#[{calendarEvent.CalendarName}]({calendarEventUrl})");
+            sb.AppendLine();
+            sb.AppendLine(calendarEvent.Summary);
+            sb.AppendLine();
+            sb.AppendLine($"Date: {calendarEvent.Start.ToString("dd MMMM yyyy")}");
+            sb.AppendLine($"Time: {calendarEvent.Start.ToString("htt").ToUpper()} to {calendarEvent.End.ToString("htt").ToUpper()}");
+            sb.AppendLine($"Where: {calendarEvent.Location}");
+            if (calendarEvent.EventFormat != EventFormat.Online)
+            {
+                sb.AppendLine($"Distance: {calendarEvent.Distance} miles");
+            }
+            sb.AppendLine($"Event type: {calendarEvent.EventFormat.ToString()}");
+            sb.AppendLine();
+
+            eventsDisplayed++;
+
             if (eventsDisplayed >= maxEventsPerLocation)
             {
                 sb.AppendLine($"^ Only showing {maxEventsPerLocation} events for this location. See all {filteredEvents.Count} events for this location.");
                 break;
             }
-
-            sb.AppendLine(calendarEvent.CalendarName);
-            sb.AppendLine(calendarEvent.Summary);
-            sb.AppendLine($"Date: {calendarEvent.Start}");
-            sb.AppendLine($"Time: {calendarEvent.Start}");
-            sb.AppendLine($"Where: {calendarEvent.Location}");
-            if (calendarEvent.EventFormat != EventFormat.Online)
+            else
             {
-                sb.AppendLine($"Distance: {calendarEvent.Distance}");
+                sb.AppendLine("---");
             }
-            sb.AppendLine($"EventType: {calendarEvent.EventFormat}");
-            sb.AppendLine("---");
-
-            eventsDisplayed++;
         }
 
         sb.AppendLine();
