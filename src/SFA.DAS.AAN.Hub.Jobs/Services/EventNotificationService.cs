@@ -11,10 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
-using Microsoft.AspNetCore.Mvc;
-using Grpc.Core;
+using SFA.DAS.AAN.Hub.Data.Helpers;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -29,20 +26,20 @@ public class EventNotificationService : IEventNotificationService
     private readonly ILogger<EventNotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
-    private readonly IOuterApiClient _outerApiClient;
+    private readonly IEventQueryService _eventQueryService;
 
     public EventNotificationService(
        IEventNotificationSettingsRepository memberRepository,
        IMessageSession messageSession,
        IOptions<ApplicationConfiguration> applicationConfigurationOptions,
        ILogger<EventNotificationService> logger,
-       IOuterApiClient outerApiClient)
+       IEventQueryService eventQueryService)
     {
         _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _logger = logger;
-        _outerApiClient = outerApiClient;
+        _eventQueryService = eventQueryService;
     }
 
     public async Task<int> ProcessEventNotifications(CancellationToken cancellationToken)
@@ -52,21 +49,6 @@ public class EventNotificationService : IEventNotificationService
         _logger.LogInformation("Number of members receiving event notifications: {count}.", notificationSettings.Count);
 
         if (notificationSettings.Count == 0) return 0;
-
-        //var notificationPerEmployer = notificationSettings.GroupBy(s => s.MemberDetails.Id);
-        //var firstNot = notificationSettings.First();
-        //var eventListRequest = new GetNetworkEventsRequest 
-        //{
-        //    Location = firstNot.Locations.First().Name,
-        //    EventFormat = new List<EventFormat> { EventFormat.Online },
-        //    Radius = firstNot.Locations[0].Radius,
-        //};
-
-        //var eventsQuery = BuildQueryStringParameters(eventListRequest);
-
-        //var eventList = await _outerApiClient.GetCalendarEvents(firstNot.MemberDetails.Id, eventsQuery, cancellationToken);
-
-        //_logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, firstNot.Locations.First().Name);
 
         var tasks = notificationSettings.Select(n => SendEventNotificationEmails(n, cancellationToken));
 
@@ -79,49 +61,14 @@ public class EventNotificationService : IEventNotificationService
     {
         try
         {
-            // GETTING EVENTS
-            //var eventFormats = notificationSettings.EventTypes.Select(x => (Enum.TryParse(x.EventType, out EventFormat format)));
-            var eventFormats = notificationSettings.EventTypes.Select(x =>
-            {
-                if (Enum.TryParse(x.EventType, ignoreCase: true, out EventFormat format))
-                {
-                    return (EventFormat?)format; // Return the parsed enum if successful
-                }
-                return null; // Return null if parsing failed
-            })
-            .Where(format => format.HasValue) // Filter out nulls (failed parses)
-            .Cast<EventFormat>() // Convert the result to a list of enums
-            .ToList();
+            var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
 
-            var eventListingForAllLocations = new List<EventListingDTO>(); // need a new type to have location name radius and the events
+            var eventListings = await _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
 
-            // for each location, get a list of events..
-            foreach (var locationSetting in notificationSettings.Locations)
-            {
-                var request = new GetNetworkEventsRequest
-                {
-                    Location = locationSetting.Name,
-                    EventFormat = eventFormats,
-                    Radius = locationSetting.Radius,
-                };
-
-                var eventsQuery = BuildQueryStringParameters(request);
-
-                var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
-
-                _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
-
-                eventListingForAllLocations.Add(new EventListingDTO 
-                {
-                    TotalCount = eventList.TotalCount,
-                    CalendarEvents = eventList.CalendarEvents,
-                    Location = locationSetting.Name,
-                    Radius = locationSetting.Radius
-                });
-            }
+            var totalCount = eventListings.Sum(e => e.TotalCount);
 
             // SENDER
-            var command = CreateSendCommand(notificationSettings, eventListingForAllLocations, cancellationToken);
+            var command = CreateSendCommand(notificationSettings, eventListings, totalCount, cancellationToken);
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
             await _messageSession.Send(command);
         }
@@ -131,7 +78,7 @@ public class EventNotificationService : IEventNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, int numberOfEvents, CancellationToken cancellationToken)
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
@@ -140,7 +87,7 @@ public class EventNotificationService : IEventNotificationService
         var tokens = new Dictionary<string, string>
             {
                 { "first_name", firstName },
-                { "event_count", "1" }, // TODO
+                { "event_count", numberOfEvents.ToString() }, // TODO
                 { "event_listing_snippet", GetEventListingSnippet(events) }, // TODO
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
@@ -206,75 +153,5 @@ public class EventNotificationService : IEventNotificationService
         }
 
         return sb.ToString();
-    }
-
-    public static Dictionary<string, string[]> BuildQueryStringParameters(GetNetworkEventsRequest request)
-    {
-        Dictionary<string, string[]> dictionary = new Dictionary<string, string[]>();
-        if (!string.IsNullOrWhiteSpace(request.Keyword))
-        {
-            dictionary.Add("keyword", new string[1] { request.Keyword.Trim() });
-        }
-
-        string text = "";
-        if (!string.IsNullOrWhiteSpace(request.Location))
-        {
-            dictionary.Add("location", new string[1] { request.Location });
-            dictionary.Add("radius", new string[1] { request.Radius.ToString() ?? string.Empty });
-            text = (string.IsNullOrWhiteSpace(request.OrderBy) ? "soonest" : request.OrderBy);
-        }
-
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            dictionary.Add("orderBy", new string[1] { text });
-        }
-
-        if (request.FromDate.HasValue)
-        {
-            dictionary.Add("fromDate", new string[1] { request.FromDate.Value.ToString("yyyy-MM-dd") });
-        }
-
-        if (request.ToDate.HasValue)
-        {
-            dictionary.Add("toDate", new string[1] { request.ToDate.Value.ToString("yyyy-MM-dd") });
-        }
-
-        dictionary.Add("eventFormat", request.EventFormat.Select((EventFormat format) => format.ToString()).ToArray());
-        dictionary.Add("calendarId", request.CalendarId.Select((int cal) => cal.ToString()).ToArray());
-        dictionary.Add("regionId", request.RegionId.Select((int region) => region.ToString()).ToArray());
-        if (request.Page.HasValue)
-        {
-            dictionary.Add("page", new string[1] { request.Page?.ToString() });
-        }
-
-        if (request.PageSize.HasValue)
-        {
-            dictionary.Add("pageSize", new string[1] { request.PageSize?.ToString() });
-        }
-
-        return dictionary;
-    }
-
-    public class GetNetworkEventsRequest
-    {
-        public string? Keyword { get; set; }
-        public DateTime? FromDate { get; set; }
-        public DateTime? ToDate { get; set; }
-        public List<EventFormat> EventFormat { get; set; } = new List<EventFormat>();
-        public List<int> CalendarId { get; set; } = new List<int>();
-        public List<int> RegionId { get; set; } = new List<int>();
-        public int? Page { get; set; }
-        public int? PageSize { get; set; }
-        public string? Location { get; set; } = "";
-        public int? Radius { get; set; }
-        public string OrderBy { get; set; } = "";
-    }
-
-    public class EventListingDTO
-    {
-        public int TotalCount { get; set; }
-        public IEnumerable<CalendarEventSummary> CalendarEvents { get; set; } = [];
-        public string? Location { get; set; } = "";
-        public int? Radius { get; set; }
     }
 }
