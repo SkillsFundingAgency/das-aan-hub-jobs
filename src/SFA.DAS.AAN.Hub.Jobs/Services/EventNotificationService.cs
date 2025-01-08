@@ -152,7 +152,7 @@ public class EventNotificationService : IEventNotificationService
         // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
-            sb.AppendLine($"##In-person and hybrid ({inPersonAndHybridTotalCount} events)");
+            sb.AppendLine($"#In-person and hybrid ({inPersonAndHybridTotalCount} events)");
             sb.AppendLine();
 
             foreach (var locationEvents in inPersonAndHybridEvents)
@@ -164,7 +164,7 @@ public class EventNotificationService : IEventNotificationService
         // Process Online Events
         if (onlineEvents.Any())
         {
-            sb.AppendLine($"##Online events ({onlineTotalCount} events)");
+            sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
             foreach (var locationEvents in onlineEvents)
@@ -187,8 +187,8 @@ public class EventNotificationService : IEventNotificationService
             return;
 
         var locationText = locationEvents.Radius == 0
-            ? $"#Across England ({filteredEvents.Count} events)"
-            : $"#{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+            ? $"##Across England ({filteredEvents.Count} events)"
+            : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
         sb.AppendLine(locationText);
         sb.AppendLine();
 
@@ -199,7 +199,7 @@ public class EventNotificationService : IEventNotificationService
         {
             var calendarEventUrl = "https://www.gov.uk/example"; // TODO
 
-            sb.AppendLine($"#[{calendarEvent.CalendarName}]({calendarEventUrl})");
+            sb.AppendLine($"##[{calendarEvent.CalendarName}]({calendarEventUrl})");
             sb.AppendLine();
             sb.AppendLine(calendarEvent.Summary);
             sb.AppendLine();
