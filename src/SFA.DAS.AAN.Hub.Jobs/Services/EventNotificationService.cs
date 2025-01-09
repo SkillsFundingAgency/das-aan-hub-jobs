@@ -212,7 +212,7 @@ public class EventNotificationService : IEventNotificationService
             var calendarEventUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events/" + calendarEvent.CalendarEventId.ToString();
             var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
 
-            sb.AppendLine($"##[{calendarEvent.CalendarName}]({calendarEventUrl})");
+            sb.AppendLine($"##[{calendarEvent.Title}]({calendarEventUrl})");
             sb.AppendLine();
             sb.AppendLine(calendarEvent.Summary);
             sb.AppendLine();
@@ -223,7 +223,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 sb.AppendLine($"Distance: {calendarEvent.Distance} miles");
             }
-            sb.AppendLine($"Event type: {calendarEvent.EventFormat.ToString()}");
+            sb.AppendLine($"Event type: {calendarEvent.CalendarName.ToString()}");
             sb.AppendLine();
 
             eventsDisplayed++;
