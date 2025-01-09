@@ -5,6 +5,7 @@ using SFA.DAS.AAN.Hub.Data.Extensions;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.AAN.Hub.Jobs.Extensions;
 using SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration;
+using SFA.DAS.Encoding;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -24,6 +25,7 @@ var host = new HostBuilder()
             .ConfigureHttpClients(context.Configuration)
             .AddApplicationRegistrations()
             .AddNServiceBus(context.Configuration);
+        s.AddSingleton<IEncodingService, EncodingService>();
     })
     .Build();
 
