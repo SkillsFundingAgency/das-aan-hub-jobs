@@ -231,6 +231,7 @@ public class EventNotificationService : IEventNotificationService
             if (eventsDisplayed >= maxEventsPerLocation)
             {
                 sb.AppendLine($"^ We're only showing you the next {maxEventsPerLocation} events for {locationEvents.Location}. [See all {filteredEvents.Count} upcoming events {locationUrlText}]({calendarEventUrl}).");
+                sb.AppendLine("---");
                 break;
             }
             else
