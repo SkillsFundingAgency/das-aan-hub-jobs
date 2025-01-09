@@ -14,6 +14,7 @@ public static class AddApplicationRegistrationsExtension
         services.AddTransient<IEventNotificationService, EventNotificationService>();
         services.AddTransient<INotificationService, NotificationService>();
         services.AddTransient<IEventQueryService, EventQueryService>();
+        services.AddTransient<IEmployerAccountsService, EmployerAccountsService>();
         services.AddTransient<IMemberDataCleanupService, MemberDataCleanupService>();
         services.AddTransient<ISynchroniseApprenticeDetailsService, SynchroniseApprenticeDetailsService>();
         return services;
