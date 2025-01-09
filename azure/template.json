@@ -85,7 +85,7 @@
     "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]",
     "functionAppName": "[concat(variables('resourceNamePrefix'), '-fa')]",
     "appServicePlanName": "[concat(variables('resourceNamePrefix'), '-asp')]",
-    "configNames": "SFA.DAS.AANHub.Jobs",
+    "configNames": "SFA.DAS.AANHub.Jobs,SFA.DAS.Encoding",
     "memberDataCleanupSchedule": "0 0 4 * * 1-5",
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
