@@ -29,7 +29,7 @@ public class EventNotificationService : IEventNotificationService
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
     private readonly IEventQueryService _eventQueryService;
-    public readonly IEmployerAccountsService _employerAccountsService;
+    private readonly IEmployerAccountsService _employerAccountsService;
 
     public EventNotificationService(
        IEventNotificationSettingsRepository memberRepository,

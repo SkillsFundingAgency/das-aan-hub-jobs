@@ -12,13 +12,15 @@ namespace SFA.DAS.AAN.Hub.Jobs.Services;
 public class EmployerAccountsService : IEmployerAccountsService
 {
     private readonly IOuterApiClient _outerApiClient;
-    private readonly IEncodingService _encodingService;
+    //private readonly IEncodingService _encodingService;
     private readonly ILogger<EmployerAccountsService> _logger;
 
-    public EmployerAccountsService(IOuterApiClient outerApiClient, IEncodingService encodingService, ILogger<EmployerAccountsService> logger)
+    public EmployerAccountsService(IOuterApiClient outerApiClient, 
+        //IEncodingService encodingService,
+        ILogger<EmployerAccountsService> logger)
     {
         _outerApiClient = outerApiClient;
-        _encodingService = encodingService;
+        //_encodingService = encodingService;
         _logger = logger;
     }
 

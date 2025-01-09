@@ -25,7 +25,7 @@ var host = new HostBuilder()
             .ConfigureHttpClients(context.Configuration)
             .AddApplicationRegistrations()
             .AddNServiceBus(context.Configuration);
-        s.AddSingleton<IEncodingService, EncodingService>();
+        //s.AddSingleton<IEncodingService, EncodingService>();
     })
     .Build();
 
