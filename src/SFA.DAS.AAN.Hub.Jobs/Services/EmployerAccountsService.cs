@@ -1,7 +1,7 @@
 ﻿using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
-using System.Linq;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,17 +16,9 @@ public class EmployerAccountsService : IEmployerAccountsService
         _outerApiClient = outerApiClient;
     }
 
-    public async Task<UserAccountsApiResponse> GetEmployerUserAccounts(string userId, string email)
+    public async Task<EmployerMember> GetEmployerUserAccounts(Guid userRef)
     {
-        var result = await _outerApiClient.GetAccountUsers(userId, email, CancellationToken.None);
-        return result;
+        var result = await _outerApiClient.GetEmployerMember(userRef, CancellationToken.None);
+        return result.GetContent();
     }
-
-    //private static EmployerUserAccounts Transform(GetEmployerUserAccountsResponse response) =>
-    //    new(response.IsSuspended, response.FirstName, response.LastName, response.EmployerUserId, response.UserAccountResponse.Select(u => new EmployerIdentifier(u.EncodedAccountId, u.DasAccountName, u.Role)).ToList());
-
-    //    private static EmployerUserAccounts Transform(GetEmployerUserAccountsResponse response) =>
-    //        new(response.IsSuspended, response.FirstName, response.LastName, response.EmployerUserId, response.UserAccountResponse.Select(u => new EmployerIdentifier(u.EncodedAccountId, u.DasAccountName, u.Role)).ToList());
-    //}
 }
-

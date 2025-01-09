@@ -12,6 +12,13 @@ public record GetEmployerUserAccountsResponse(string FirstName, string LastName,
 
 public record EmployerUserAccountItem(string EncodedAccountId, string DasAccountName, string Role);
 
+public class EmployerMember
+{
+    public Guid MemberId { get; set; }
+    public string Name { get; set; } = null!;
+    public string Status { get; set; } = null!;
+}
+
 
 public class UserAccountsApiResponse
 {

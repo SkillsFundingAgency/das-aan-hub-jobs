@@ -4,5 +4,5 @@ namespace SFA.DAS.AAN.Hub.Data.Interfaces;
 
 public interface IEmployerAccountsService
 {
-    Task<UserAccountsApiResponse> GetEmployerUserAccounts(string userId, string email);
+    Task<EmployerMember> GetEmployerUserAccounts(Guid userRef);
 }

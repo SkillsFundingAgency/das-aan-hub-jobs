@@ -11,11 +11,12 @@ namespace SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 
 public interface IOuterApiClient
 {
-    [Get("/employeraccounts/{userId}")]
-    Task<GetEmployerUserAccountsResponse> GetUserAccounts([Path] string userId, [Query] string email, CancellationToken cancellationToken);
+    //[Get("/employeraccounts/{userId}")]
+    //Task<GetEmployerUserAccountsResponse> GetUserAccounts([Path] string userId, [Query] string email, CancellationToken cancellationToken);
 
-    [Get("/AccountUsers/{userId}/accounts")]
-    Task<UserAccountsApiResponse> GetAccountUsers([Path] string userId, [Query] string email, CancellationToken cancellationToken);
+    [Get("/employers/{userRef}")]
+    [AllowAnyStatusCode]
+    Task<Response<EmployerMember>> GetEmployerMember([Path] Guid userRef, CancellationToken cancellationToken);
 
     [Get("CalendarEvents")]
     Task<GetCalendarEventsQueryResult> GetCalendarEvents([Header("X-RequestedByMemberId")] Guid requestedByMemberId, [QueryMap] IDictionary<string, string[]> parameters, CancellationToken cancellationToken);
