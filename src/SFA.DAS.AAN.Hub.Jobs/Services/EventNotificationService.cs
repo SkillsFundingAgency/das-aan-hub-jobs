@@ -74,11 +74,11 @@ public class EventNotificationService : IEventNotificationService
             await Task.WhenAll(eventListingTask, employerAccountTask);
 
             var eventListings = eventListingTask.Result;
-            var employerAccounts = employerAccountTask.Result;
+            var employerAccountId = employerAccountTask.Result;
 
-            _logger.LogInformation("Employer account Id: {EmployerAccountId} and MemberId {memberId}.", employerAccounts.MemberId, notificationSettings.MemberDetails.Id);
+            _logger.LogInformation("Employer account Id: {EmployerAccountId} and MemberId {memberId}.", employerAccountId, notificationSettings.MemberDetails.Id);
 
-            var command = CreateSendCommand(notificationSettings, eventListings, employerAccounts.MemberId.ToString(), cancellationToken);
+            var command = CreateSendCommand(notificationSettings, eventListings, employerAccountId, cancellationToken);
 
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
 

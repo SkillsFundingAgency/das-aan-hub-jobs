@@ -22,14 +22,13 @@ public class EmployerAccountsService : IEmployerAccountsService
         _logger = logger;
     }
 
-    public async Task<EmployerMember> GetEmployerUserAccounts(Guid userRef)
+    public async Task<string> GetEmployerUserAccounts(Guid memberId)
     {
-        var result = await _outerApiClient.GetEmployerMember(userRef, CancellationToken.None);
-        var employer = result.GetContent();
+        var result = await _outerApiClient.GetMemberById(memberId, CancellationToken.None);
 
-        _logger.LogInformation($"employer account id: {employer.Name}");
+        _logger.LogInformation($"employer account id: {result.EmployerAccountId}");
         //var employerHashedAccountId = _encodingService.Encode(result.GetContent().Name, EncodingType.AccountId);
 
-        return result.GetContent();
+        return result.EmployerAccountId.ToString();
     }
 }
