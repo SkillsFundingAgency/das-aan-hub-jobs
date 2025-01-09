@@ -16,12 +16,17 @@ public class EmployerAccountsService : IEmployerAccountsService
         _outerApiClient = outerApiClient;
     }
 
-    public async Task<EmployerUserAccounts> GetEmployerUserAccounts(string userId, string email)
+    public async Task<UserAccountsApiResponse> GetEmployerUserAccounts(string userId, string email)
     {
-        var result = await _outerApiClient.GetUserAccounts(userId, email, CancellationToken.None);
-        return Transform(result);
+        var result = await _outerApiClient.GetAccountUsers(userId, email, CancellationToken.None);
+        return result;
     }
 
-    private static EmployerUserAccounts Transform(GetEmployerUserAccountsResponse response) =>
-        new(response.IsSuspended, response.FirstName, response.LastName, response.EmployerUserId, response.UserAccountResponse.Select(u => new EmployerIdentifier(u.EncodedAccountId, u.DasAccountName, u.Role)).ToList());
+    //private static EmployerUserAccounts Transform(GetEmployerUserAccountsResponse response) =>
+    //    new(response.IsSuspended, response.FirstName, response.LastName, response.EmployerUserId, response.UserAccountResponse.Select(u => new EmployerIdentifier(u.EncodedAccountId, u.DasAccountName, u.Role)).ToList());
+
+    //    private static EmployerUserAccounts Transform(GetEmployerUserAccountsResponse response) =>
+    //        new(response.IsSuspended, response.FirstName, response.LastName, response.EmployerUserId, response.UserAccountResponse.Select(u => new EmployerIdentifier(u.EncodedAccountId, u.DasAccountName, u.Role)).ToList());
+    //}
 }
+

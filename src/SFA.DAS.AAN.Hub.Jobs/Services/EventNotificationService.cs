@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Helpers;
 using SFA.DAS.AAN.Hub.Data.Entities;
+using Azure.Core;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -67,13 +68,17 @@ public class EventNotificationService : IEventNotificationService
         {
             var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
 
-            var eventListings = await _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
+            var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
+            var employerAccountTask = _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id.ToString(), notificationSettings.MemberDetails.Email);
 
-            var employerAccounts = await _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id.ToString(), notificationSettings.MemberDetails.Email);
+            await Task.WhenAll(eventListingTask, employerAccountTask);
+
+            var eventListings = eventListingTask.Result;
+            var employerAccounts = employerAccountTask.Result;
 
             _logger.LogInformation("{count} employer accounts found for member {memberId}.", employerAccounts.UserAccounts.Count(), notificationSettings.MemberDetails.Id);
 
-            var command = CreateSendCommand(notificationSettings, eventListings, employerAccounts.UserAccounts.First().AccountId, cancellationToken);
+            var command = CreateSendCommand(notificationSettings, eventListings, employerAccounts.UserAccounts.First().EncodedAccountId, cancellationToken);
 
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
 

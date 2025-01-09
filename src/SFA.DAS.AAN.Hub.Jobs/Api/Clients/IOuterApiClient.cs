@@ -2,6 +2,8 @@
 using SFA.DAS.AAN.Hub.Data.Dto;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +13,9 @@ public interface IOuterApiClient
 {
     [Get("/employeraccounts/{userId}")]
     Task<GetEmployerUserAccountsResponse> GetUserAccounts([Path] string userId, [Query] string email, CancellationToken cancellationToken);
+
+    [Get("/AccountUsers/{userId}/accounts")]
+    Task<UserAccountsApiResponse> GetAccountUsers([Path] string userId, [Query] string email, CancellationToken cancellationToken);
 
     [Get("CalendarEvents")]
     Task<GetCalendarEventsQueryResult> GetCalendarEvents([Header("X-RequestedByMemberId")] Guid requestedByMemberId, [QueryMap] IDictionary<string, string[]> parameters, CancellationToken cancellationToken);
@@ -25,7 +30,3 @@ public class GetCalendarEventsQueryResult
     public IEnumerable<CalendarEventSummary> CalendarEvents { get; set; } = [];
     public bool IsInvalidLocation { get; set; }
 }
-
-public record GetEmployerUserAccountsResponse(string FirstName, string LastName, string EmployerUserId, bool IsSuspended, IEnumerable<EmployerUserAccountItem> UserAccountResponse);
-
-public record EmployerUserAccountItem(string EncodedAccountId, string DasAccountName, string Role);
