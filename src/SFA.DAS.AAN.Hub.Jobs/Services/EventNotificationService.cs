@@ -75,8 +75,6 @@ public class EventNotificationService : IEventNotificationService
             var eventListings = eventListingTask.Result;
             var employerAccountId = employerAccountTask.Result;
 
-            _logger.LogInformation("Employer account Id: {EmployerAccountId} and MemberId {memberId}.", employerAccountId, notificationSettings.MemberDetails.Id);
-
             var command = CreateSendCommand(notificationSettings, eventListings, employerAccountId, cancellationToken);
 
             _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
@@ -158,7 +156,7 @@ public class EventNotificationService : IEventNotificationService
             .ToList();
 
         var onlineEvents = eventListings
-            .Where(e => e.CalendarEvents.All(ev => ev.EventFormat == EventFormat.Online))
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
         var inPersonAndHybridTotalCount = inPersonAndHybridEvents

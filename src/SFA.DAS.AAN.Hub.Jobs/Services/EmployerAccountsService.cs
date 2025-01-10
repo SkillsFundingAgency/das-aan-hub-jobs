@@ -27,11 +27,9 @@ public class EmployerAccountsService : IEmployerAccountsService
     {
         var result = await _outerApiClient.GetMemberById(memberId, CancellationToken.None);
 
-        _logger.LogInformation($"employer account id: {result.EmployerAccountId}");
-
         var employerHashedAccountId = _encodingService.Encode(result.EmployerAccountId, EncodingType.AccountId);
 
-        _logger.LogInformation($"ENCODED employer account id: {employerHashedAccountId}");
+        _logger.LogInformation($"Encoded employer account id: {employerHashedAccountId}");
 
         return employerHashedAccountId;
     }
