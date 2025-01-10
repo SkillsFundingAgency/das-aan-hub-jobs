@@ -165,6 +165,16 @@ public class EventNotificationService : IEventNotificationService
         var onlineTotalCount = onlineEvents
             .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
 
+        var onlineEventListing = new EventListingDTO
+        {
+            CalendarEvents = eventListings
+            .SelectMany(e => e.CalendarEvents)
+            .Where(ev => ev.EventFormat == EventFormat.Online)
+            .OrderBy(ev => ev.Start)
+            .Take(3)
+            .ToList()
+            };
+
         // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
@@ -183,10 +193,7 @@ public class EventNotificationService : IEventNotificationService
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            foreach (var locationEvents in onlineEvents)
-            {
-                AppendLocationEvents(sb, locationEvents, employerAccountId, EventFormat.Online);
-            }
+            AppendLocationEvents(sb, onlineEventListing, employerAccountId, EventFormat.Online);
         }
 
         return sb.ToString();
@@ -202,11 +209,14 @@ public class EventNotificationService : IEventNotificationService
         if (!filteredEvents.Any())
             return;
 
-        var locationHeaderText = locationEvents.Radius == 0
-            ? $"##Across England ({filteredEvents.Count} events)"
-            : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
-        sb.AppendLine(locationHeaderText);
-        sb.AppendLine();
+        if (!formatsToInclude.Contains(EventFormat.Online)) 
+        {
+            var locationHeaderText = locationEvents.Radius == 0
+                ? $"##Across England ({filteredEvents.Count} events)"
+                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+            sb.AppendLine(locationHeaderText);
+            sb.AppendLine();
+        }
 
         var locationUrlText = locationEvents.Radius == 0
             ? $"across England"
@@ -224,11 +234,16 @@ public class EventNotificationService : IEventNotificationService
             sb.AppendLine(calendarEvent.Summary);
             sb.AppendLine();
             sb.AppendLine($"Date: {calendarEvent.Start.ToString("dd MMMM yyyy")}");
+            sb.AppendLine();
             sb.AppendLine($"Time: {calendarEvent.Start.ToString("htt").ToUpper()} to {calendarEvent.End.ToString("htt").ToUpper()}");
-            sb.AppendLine($"Where: {calendarEvent.Location}");
+            sb.AppendLine();
+
             if (calendarEvent.EventFormat != EventFormat.Online)
             {
+                sb.AppendLine($"Where: {calendarEvent.Location}");
+                sb.AppendLine();
                 sb.AppendLine($"Distance: {calendarEvent.Distance} miles");
+                sb.AppendLine();
             }
             sb.AppendLine($"Event type: {calendarEvent.CalendarName.ToString()}");
 
