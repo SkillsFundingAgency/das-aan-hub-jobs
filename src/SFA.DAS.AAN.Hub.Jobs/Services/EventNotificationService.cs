@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using System.Linq;
 using SFA.DAS.AAN.Hub.Data.Helpers;
 using SFA.DAS.AAN.Hub.Data.Entities;
-using Azure.Core;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -215,7 +214,6 @@ public class EventNotificationService : IEventNotificationService
         foreach (var calendarEvent in filteredEvents)
         {
             var calendarEventUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events/" + calendarEvent.CalendarEventId.ToString();
-            var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
 
             sb.AppendLine($"##[{calendarEvent.Title}]({calendarEventUrl})");
             sb.AppendLine();
@@ -229,18 +227,27 @@ public class EventNotificationService : IEventNotificationService
                 sb.AppendLine($"Distance: {calendarEvent.Distance} miles");
             }
             sb.AppendLine($"Event type: {calendarEvent.CalendarName.ToString()}");
-            sb.AppendLine();
 
             eventsDisplayed++;
 
             if (eventsDisplayed >= maxEventsPerLocation)
             {
-                sb.AppendLine($"^ We're only showing you the next {maxEventsPerLocation} events for {locationEvents.Location}. [See all {filteredEvents.Count} upcoming events {locationUrlText}]({calendarEventUrl}).");
+                var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
+                var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
+                    $"See all {filteredEvents.Count} upcoming online events" :
+                    $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
+                var allEventsText = calendarEvent.EventFormat == EventFormat.Online
+                    ? $"We're only showing you the next {maxEventsPerLocation} online events"
+                    : $"We're only showing you the next {maxEventsPerLocation} events for {locationEvents.Location}";
+
+                sb.AppendLine($"^ {allEventsText}. [{allEventsUrlText}]({calendarEventUrl}).");
+                sb.AppendLine();
                 sb.AppendLine("---");
                 break;
             }
             else
             {
+                sb.AppendLine();
                 sb.AppendLine("---");
             }
         }
