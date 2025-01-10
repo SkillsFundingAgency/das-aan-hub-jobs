@@ -134,6 +134,12 @@ public class EventNotificationService : IEventNotificationService
     {
         var sb = new StringBuilder();
 
+        if (notificationSettings.Locations.Any())
+        {
+            sb.AppendLine("We'll email you about in-person and hybrid events in the following locations:");
+            sb.AppendLine();
+        }
+
         foreach (var loc in notificationSettings.Locations)
         {
             var locationText = loc.Radius == 0 ? "Across England" : $"* {loc.Name}, within {loc.Radius} miles";
