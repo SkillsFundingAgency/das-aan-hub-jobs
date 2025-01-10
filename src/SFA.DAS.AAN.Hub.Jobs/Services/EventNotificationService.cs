@@ -238,9 +238,10 @@ public class EventNotificationService : IEventNotificationService
                     $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {maxEventsPerLocation} online events"
-                    : $"We're only showing you the next {maxEventsPerLocation} events for {locationEvents.Location}";
+                    : $"We're only showing you the next {maxEventsPerLocation} events in {locationEvents.Location}";
 
-                sb.AppendLine($"^ {allEventsText}. [{allEventsUrlText}]({calendarEventUrl}).");
+                sb.AppendLine();
+                sb.AppendLine($"^ {allEventsText}. [{allEventsUrlText}]({allEventsUrl}).");
                 sb.AppendLine();
                 sb.AppendLine("---");
                 break;
