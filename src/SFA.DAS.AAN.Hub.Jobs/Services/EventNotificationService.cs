@@ -23,6 +23,8 @@ public interface IEventNotificationService
 
 public class EventNotificationService : IEventNotificationService
 {
+    private const int MaxEventsPerLocation = 3;
+
     private readonly IEventNotificationSettingsRepository _memberRepository;
     private readonly ILogger<EventNotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
@@ -227,7 +229,6 @@ public class EventNotificationService : IEventNotificationService
             ? $"across England"
             : $"within {locationEvents.Radius} miles  of {locationEvents.Location}";
 
-        var maxEventsPerLocation = 3;
         var eventsDisplayed = 0;
 
         foreach (var calendarEvent in filteredEvents)
@@ -254,15 +255,15 @@ public class EventNotificationService : IEventNotificationService
 
             eventsDisplayed++;
 
-            if (eventsDisplayed >= maxEventsPerLocation)
+            if (eventsDisplayed >= MaxEventsPerLocation)
             {
                 var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
                     $"See all {filteredEvents.Count} upcoming online events" :
                     $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
-                    ? $"We're only showing you the next {maxEventsPerLocation} online events"
-                    : $"We're only showing you the next {maxEventsPerLocation} events in {locationEvents.Location}";
+                    ? $"We're only showing you the next {MaxEventsPerLocation} online events"
+                    : $"We're only showing you the next {MaxEventsPerLocation} events in {locationEvents.Location}";
 
                 sb.AppendLine();
                 sb.AppendLine($"^ {allEventsText}. [{allEventsUrlText}]({allEventsUrl}).");
