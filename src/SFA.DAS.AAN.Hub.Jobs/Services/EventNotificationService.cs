@@ -75,11 +75,16 @@ public class EventNotificationService : IEventNotificationService
             var eventListings = eventListingTask.Result;
             var employerAccountId = employerAccountTask.Result;
 
-            var command = CreateSendCommand(notificationSettings, eventListings, employerAccountId, cancellationToken);
+            var eventCount = eventListings.Sum(e => e.TotalCount);
 
-            _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+            if (eventCount > 0) 
+            {
+                var command = CreateSendCommand(notificationSettings, eventListings, eventCount, employerAccountId, cancellationToken);
 
-            await _messageSession.Send(command);
+                _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+
+                await _messageSession.Send(command);
+            }
         }
         catch (Exception ex)
         {
@@ -87,19 +92,19 @@ public class EventNotificationService : IEventNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, string employerAccountId, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, int eventCount, string employerAccountId, CancellationToken cancellationToken)
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
         _logger.LogInformation("Employer Account used: {employerAccountId}.", employerAccountId);
-        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/event-notification-settings"; // TODO
-        var eventCount = events.Sum(e => e.TotalCount);
+        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/event-notification-settings";
+        var subject = eventCount == 1 ? "1 upcoming AAN event": $"{eventCount.ToString()} upcoming AAN events";
 
         var tokens = new Dictionary<string, string>
             {
                 { "first_name", firstName },
-                { "event_count", eventCount.ToString() },
-                { "event_listing_snippet", GetEventListingSnippet(events, employerAccountId) }, // TODO
+                { "subject", subject },
+                { "event_listing_snippet", GetEventListingSnippet(events, employerAccountId) },
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
