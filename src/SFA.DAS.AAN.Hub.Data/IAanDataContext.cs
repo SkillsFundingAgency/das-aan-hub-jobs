@@ -8,12 +8,14 @@ public interface IAanDataContext
     DbSet<Member> Members { get; }
     DbSet<MemberProfile> MemberProfiles { get; }
     DbSet<MemberPreference> MemberPreferences { get; }
+    DbSet<Calendar> Calendars { get; }
+    DbSet<JobAudit> JobAudits { get; }
     DbSet<Audit> Audits { get; }
     DbSet<Apprentice> Apprentices { get; }
     DbSet<Employer> Employers { get; }
     DbSet<Attendance> Attendances { get; }
     DbSet<CalendarEvent> CalendarEvents { get; }
-    DbSet<Calendar> Calendars { get; }
-    DbSet<JobAudit> JobAudits { get; }
+    DbSet<MemberNotificationEventFormat> MemberNotificationEventFormats { get; }
+    DbSet<MemberNotificationLocation> MemberNotificationLocations { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -16,6 +16,8 @@ public class AanDataContext : DbContext, IAanDataContext
     public DbSet<CalendarEvent> CalendarEvents => Set<CalendarEvent>();
     public DbSet<Calendar> Calendars => Set<Calendar>();
     public DbSet<JobAudit> JobAudits => Set<JobAudit>();
+    public DbSet<MemberNotificationEventFormat> MemberNotificationEventFormats => Set<MemberNotificationEventFormat>();
+    public DbSet<MemberNotificationLocation> MemberNotificationLocations => Set<MemberNotificationLocation>();
 
     public AanDataContext(DbContextOptions<AanDataContext> options) : base(options) { }
 

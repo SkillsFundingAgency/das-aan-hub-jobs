@@ -1,0 +1,19 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true;",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "ConfigurationStorageConnectionString": "UseDevelopmentStorage=true;",
+    "ConfigNames": "SFA.DAS.AANHub.Jobs,SFA.DAS.Encoding",
+    "EnvironmentName": "LOCAL",
+    "SendNotificationsFunctionSchedule": "0 */3 * * * *",
+    "MemberDataCleanupFunctionSchedule": "0 */3 * * * *",
+    "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 0 * * *",
+    "EventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
+    "EventNotificationFunctionSchedule": "0 9 * * TUE"
+  },
+  "AzureWebJobs.SendNotificationsFunction.Disabled": "true",
+  "AzureWebJobs.MemberDataCleanupFunction.Disabled": "true",
+  "AzureWebJobs.SynchroniseApprenticeDetailsFunction.Disabled": "true",
+  "AzureWebJobs.EventSignUpNotificationFunctionSchedule.Disabled": "true"
+}

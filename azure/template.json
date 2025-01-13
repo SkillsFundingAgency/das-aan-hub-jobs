@@ -68,6 +68,12 @@
     "sharedManagementResourceGroup": {
       "type": "string"
     },
+    "sharedApimResourceGroup": {
+      "type": "string"
+    },
+    "sharedApimName": {
+      "type": "string"
+    },
     "utcValue": {
       "type": "string",
       "defaultValue": "[utcNow()]"
@@ -79,11 +85,12 @@
     "resourceGroupName": "[concat(variables('resourceNamePrefix'), '-rg')]",
     "functionAppName": "[concat(variables('resourceNamePrefix'), '-fa')]",
     "appServicePlanName": "[concat(variables('resourceNamePrefix'), '-asp')]",
-    "configNames": "SFA.DAS.AANHub.Jobs",
+    "configNames": "SFA.DAS.AANHub.Jobs,SFA.DAS.Encoding",
     "memberDataCleanupSchedule": "0 0 4 * * 1-5",
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
-    "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *"
+    "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
+    "eventNotificationFunctionSchedule": "0 9 * * TUE"
   },
   "resources": [
     {
@@ -270,6 +277,10 @@
                 {
                   "name": "EventSignUpNotificationFunctionSchedule",
                   "value": "[variables('eventSignUpNotificationFunctionSchedule')]"
+                },
+                {
+                  "name": "EventNotificationFunctionSchedule",
+                  "value": "[variables('eventNotificationFunctionSchedule')]"
                 }
               ]
             }
@@ -283,6 +294,30 @@
         "[variables('resourceGroupName')]",
         "[concat(variables('appServicePlanName'), '-', parameters('utcValue'))]"
       ]
+    },
+    {
+      "apiVersion": "2020-06-01",
+      "name": "[concat(variables('functionAppName'), '-apim-subscription-', parameters('utcValue'))]",
+      "resourceGroup": "[parameters('sharedApimResourceGroup')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('deploymentUrlBase'),'apim/apim-subscription.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apimName": {
+            "value": "[parameters('sharedApimName')]"
+          },
+          "subscriptionName": {
+            "value": "[variables('functionAppName')]"
+          },
+          "subscriptionScope": {
+            "value": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('sharedApimResourceGroup'), '/providers/Microsoft.ApiManagement/service/', parameters('sharedApimName'), '/products/EmployerAanOuterApi')]"
+          }
+        }
+      }
     },
     {
       "apiVersion": "2022-09-01",
