@@ -126,10 +126,11 @@ public class EventNotificationService : IEventNotificationService
             if (e.EventType == "InPerson")
             {
                 sb.AppendLine($"* in-person events");
-                break;
             }
-
-            sb.AppendLine($"* {e.EventType.ToLower()} events");
+            else
+            {
+                sb.AppendLine($"* {e.EventType.ToLower()} events");
+            }
         }
 
         return sb.ToString();
@@ -147,7 +148,7 @@ public class EventNotificationService : IEventNotificationService
 
         foreach (var loc in notificationSettings.Locations)
         {
-            var locationText = loc.Radius == 0 ? "Across England" : $"* {loc.Name}, within {loc.Radius} miles";
+            var locationText = loc.Radius == 0 ? $"* {loc.Name}, Across England" : $"* {loc.Name}, within {loc.Radius} miles";
             sb.AppendLine(locationText);
         }
 
