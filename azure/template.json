@@ -316,7 +316,7 @@
     },
     {
       "apiVersion": "2020-06-01",
-      "name": "[concat(variables('functionAppName'), '-apim-subscription-', parameters('utcValue'))]",
+      "name": "[concat(variables('functionAppName'), '-apim-sub-apprentice-aan', parameters('utcValue'))]",
       "resourceGroup": "[parameters('sharedApimResourceGroup')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
