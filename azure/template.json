@@ -330,7 +330,7 @@
             "value": "[parameters('sharedApimName')]"
           },
           "subscriptionName": {
-            "value": "[concat(variables('functionAppName'), '-ApprenticeAan')]"
+            "value": "[concat(variables('functionAppName'), '-2')]"
           },
           "subscriptionScope": {
             "value": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('sharedApimResourceGroup'), '/providers/Microsoft.ApiManagement/service/', parameters('sharedApimName'), '/products/ApprenticeAanOuterApi')]"
