@@ -15,17 +15,17 @@ public class EventNotificationSettingsRepository : IEventNotificationSettingsRep
         _context = context;
     }
 
-    public async Task<List<EventNotificationSettings>> GetEventNotificationSettingsAsync(CancellationToken cancellationToken)
+    public async Task<List<EventNotificationSettings>> GetEventNotificationSettingsAsync(CancellationToken cancellationToken, UserType? userType = UserType.Employer)
     {
         return await _context.Members
             .AsNoTracking()
-            .Where(m => (m.UserType == UserType.Employer && m.ReceiveNotifications == true))
+            .Where(m => (m.UserType == userType && m.ReceiveNotifications == true))
             .Include(m => m.MemberNotificationEventFormats)
             .Include(m => m.MemberNotificationLocations)
             .AsSplitQuery()
             .Select(a => new EventNotificationSettings
             {
-                MemberDetails = new MemberDetails 
+                MemberDetails = new MemberDetails
                 {
                     Id = a.Id,
                     FirstName = a.FirstName,

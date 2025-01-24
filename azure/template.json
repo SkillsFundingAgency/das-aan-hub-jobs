@@ -90,7 +90,8 @@
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
     "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
-    "eventNotificationFunctionSchedule": "0 9 * * TUE"
+    "eventNotificationFunctionSchedule": "0 9 * * TUE",
+    "apprenticeEventNotificationsFunctionSchedule": "0 9 * * TUE"
   },
   "resources": [
     {
@@ -281,6 +282,10 @@
                 {
                   "name": "EventNotificationFunctionSchedule",
                   "value": "[variables('eventNotificationFunctionSchedule')]"
+                },
+                {
+                  "name": "ApprenticeEventNotificationsFunctionSchedule",
+                  "value": "[variables('apprenticeEventNotificationsFunctionSchedule')]"
                 }
               ]
             }
