@@ -30,22 +30,19 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
     private readonly IApprenticeEventQueryService _apprenticeEventQueryService;
-    private readonly IEmployerAccountsService _employerAccountsService;
 
     public ApprenticeEventNotificationService(
        IEventNotificationSettingsRepository memberRepository,
        IMessageSession messageSession,
        IOptions<ApplicationConfiguration> applicationConfigurationOptions,
        ILogger<EventNotificationService> logger,
-       IApprenticeEventQueryService apprenticeEventQueryService,
-       IEmployerAccountsService employerAccountsService)
+       IApprenticeEventQueryService apprenticeEventQueryService)
     {
         _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _logger = logger;
         _apprenticeEventQueryService = apprenticeEventQueryService;
-        _employerAccountsService = employerAccountsService;
     }
 
     public async Task<int> ProcessEventNotifications(CancellationToken cancellationToken)
@@ -96,7 +93,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
-        //_logger.LogInformation("Employer Account used: {employerAccountId}.", employerAccountId);
+        _logger.LogInformation("Email used: {email}.", targetEmail);
         var unsubscribeURL = _applicationConfiguration.ApprenticeAanBaseUrl + "/event-notification-settings";
         var subject = eventCount == 1 ? "1 upcoming AAN event" : $"{eventCount.ToString()} upcoming AAN events";
 
@@ -232,7 +229,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
 
         foreach (var calendarEvent in filteredEvents)
         {
-            var calendarEventUrl = _applicationConfiguration.EmployerAanBaseUrl + "/network-events/" + calendarEvent.CalendarEventId;
+            var calendarEventUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events/" + calendarEvent.CalendarEventId;
 
             sb.AppendLine($"##[{calendarEvent.Title}]({calendarEventUrl})");
             sb.AppendLine();
@@ -256,7 +253,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
 
             if (eventsDisplayed >= MaxEventsPerLocation)
             {
-                var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl + "/network-events";
+                var allEventsUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
                     $"See all {filteredEvents.Count} upcoming online events" :
                     $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
