@@ -64,7 +64,49 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         try
         {
-            var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
+            //var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
+
+            //if (notificationSettings.EventTypes.Any(x =>
+            //        x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
+            //{
+            //    // Remove "All" and assign all other EventFormats
+            //    notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
+            //        .Cast<EventFormat>()
+            //        .Select(format => new EventNotificationSettings.NotificationEventType
+            //        {
+            //            EventType = format.ToString(),
+            //            ReceiveNotifications = true
+            //        })
+            //        .ToList();
+            //}
+
+            if (notificationSettings.EventTypes.Any(x =>
+                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
+            {
+                // Replace with all EventFormats
+                notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
+                    .Cast<EventFormat>()
+                    .Select(format => new EventNotificationSettings.NotificationEventType
+                    {
+                        EventType = format.ToString(),
+                        ReceiveNotifications = true
+                    })
+                    .ToList();
+            }
+            else
+            {
+                // Remove "All" from the list
+                notificationSettings.EventTypes.RemoveAll(x =>
+                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase));
+            }
+
+
+            List<EventFormat> eventFormats = notificationSettings.EventTypes
+                .Where(x => x.ReceiveNotifications) // Filter for ReceiveNotifications = true
+                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null) // Parse EventType to EventFormat
+                .Where(format => format.HasValue) // Exclude invalid EventTypes
+                .Cast<EventFormat>() // Convert nullable EventFormat to EventFormat
+                .ToList();
 
             var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
 
@@ -101,7 +143,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             {
                 { "first_name", firstName },
                 { "subject", subject },
-                { "event_listing_snippet", GetEventListingSnippet(events) },
+                { "event_listing_snippet", GetEventListingSnippet(events,notificationSetting) },
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
@@ -116,7 +158,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var sb = new StringBuilder();
 
-        foreach (var e in notificationSettings.EventTypes)
+        foreach (var e in notificationSettings.EventTypes.Where(x => x.ReceiveNotifications))
         {
             if (e.EventType == "InPerson")
             {
@@ -135,22 +177,44 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var sb = new StringBuilder();
 
-        if (notificationSettings.Locations.Any())
+        //if (notificationSettings.Locations.Any())
+        //{
+        //    sb.AppendLine("We'll email you about in-person and hybrid events in the following locations:");
+        //    sb.AppendLine();
+        //}
+
+        //foreach (var loc in notificationSettings.Locations)
+        //{
+        //    var locationText = loc.Radius == 0 ? $"* {loc.Name}, Across England" : $"* {loc.Name}, within {loc.Radius} miles";
+        //    sb.AppendLine(locationText);
+        //}
+
+        var inPersonEvents = notificationSettings.EventTypes
+            .Where(x => x.EventType.Equals("InPerson", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+        var hybridEvents = notificationSettings.EventTypes
+            .Where(x => x.EventType.Equals("Hybrid", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+
+        if (inPersonEvents.Any() && hybridEvents.Any())
         {
             sb.AppendLine("We'll email you about in-person and hybrid events in the following locations:");
             sb.AppendLine();
         }
-
-        foreach (var loc in notificationSettings.Locations)
+        else if (inPersonEvents.Any())
         {
-            var locationText = loc.Radius == 0 ? $"* {loc.Name}, Across England" : $"* {loc.Name}, within {loc.Radius} miles";
-            sb.AppendLine(locationText);
+            sb.AppendLine("We'll email you about in-person events in the following locations:");
+            sb.AppendLine();
         }
+        else if (hybridEvents.Any())
+        {
+            sb.AppendLine("We'll email you about hybrid events in the following locations:");
+            sb.AppendLine();
+        }
+
 
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(List<EventListingDTO> eventListings)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListings, EventNotificationSettings notificationSettings)
     {
         var sb = new StringBuilder();
 
@@ -181,8 +245,29 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
         // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
-            sb.AppendLine($"#In-person and hybrid ({inPersonAndHybridTotalCount} events)");
-            sb.AppendLine();
+            var inPersonEvents = notificationSettings.EventTypes
+                .Where(x => x.EventType.Equals("InPerson", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+            var hybridEvents = notificationSettings.EventTypes
+                .Where(x => x.EventType.Equals("Hybrid", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+
+            if (inPersonEvents.Any() && hybridEvents.Any())
+            {
+                sb.AppendLine($"#In-person and hybrid events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
+            else if (inPersonEvents.Any())
+            {
+                sb.AppendLine($"#In-person events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
+            else if (hybridEvents.Any())
+            {
+                sb.AppendLine($"#Hybrid events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
+
+            //sb.AppendLine($"#In-person and hybrid ({inPersonAndHybridTotalCount} events)");
+            //sb.AppendLine();
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
