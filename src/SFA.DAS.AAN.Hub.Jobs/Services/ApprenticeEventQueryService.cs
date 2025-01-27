@@ -30,26 +30,34 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
 
             foreach (var locationSetting in notificationSettings.Locations)
             {
-                var request = new GetApprenticeNetworkEventsRequest
+                foreach (var eventType in eventFormats)
                 {
-                    Location = locationSetting.Name,
-                    EventFormat = eventFormats,
-                    Radius = locationSetting.Radius,
-                };
+                    var request = new GetApprenticeNetworkEventsRequest
+                    {
+                        Location = locationSetting.Name,
+                        EventFormat = new List<EventFormat> { eventType },
+                        Radius = locationSetting.Radius,
+                    };
 
-                var eventsQuery = BuildQueryStringParameters(request);
+                    var eventsQuery = BuildQueryStringParameters(request);
 
-                var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
+                    var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
-                _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+                    _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
 
-                eventListings.Add(new EventListingDTO
-                {
-                    TotalCount = eventList.TotalCount,
-                    CalendarEvents = eventList.CalendarEvents,
-                    Location = locationSetting.Name,
-                    Radius = locationSetting.Radius
-                });
+                    var eventFormatsCopy = request.EventFormat.ToList();
+
+                    eventListings.Add(new EventListingDTO
+                    {
+                        TotalCount = eventList.TotalCount,
+                        OnlineCount = eventFormatsCopy.Contains(EventFormat.Online) ? eventList.TotalCount : 0,
+                        InPersonCount = eventFormatsCopy.Contains(EventFormat.InPerson) ? eventList.TotalCount : 0,
+                        HybridCount = eventFormatsCopy.Contains(EventFormat.Hybrid) ? eventList.TotalCount : 0,
+                        CalendarEvents = eventList.CalendarEvents,
+                        Location = locationSetting.Name,
+                        Radius = locationSetting.Radius
+                    });
+                }
             }
 
             return eventListings;

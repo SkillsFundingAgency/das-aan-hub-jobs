@@ -226,11 +226,13 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        var inPersonAndHybridTotalCount = inPersonAndHybridEvents
-            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
+        var inPersonAndHybridTotalCount = eventListings.Sum(e => e.HybridCount+e.InPersonCount);
+        var onlineTotalCount = eventListings.Sum(e => e.OnlineCount);
+        //var inPersonAndHybridTotalCount = inPersonAndHybridEvents
+        //    .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
 
-        var onlineTotalCount = onlineEvents
-            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
+        //var onlineTotalCount = onlineEvents
+        //    .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
 
         var onlineEventListing = new EventListingDTO
         {
