@@ -45,14 +45,9 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
 
                     _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
 
-                    var eventFormatsCopy = request.EventFormat.ToList();
-
                     eventListings.Add(new EventListingDTO
                     {
                         TotalCount = eventList.TotalCount,
-                        OnlineCount = eventFormatsCopy.Contains(EventFormat.Online) ? eventList.TotalCount : 0,
-                        InPersonCount = eventFormatsCopy.Contains(EventFormat.InPerson) ? eventList.TotalCount : 0,
-                        HybridCount = eventFormatsCopy.Contains(EventFormat.Hybrid) ? eventList.TotalCount : 0,
                         CalendarEvents = eventList.CalendarEvents,
                         Location = locationSetting.Name,
                         Radius = locationSetting.Radius

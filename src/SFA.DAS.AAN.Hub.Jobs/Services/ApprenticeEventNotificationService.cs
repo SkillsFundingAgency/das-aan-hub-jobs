@@ -11,7 +11,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Helpers;
 using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
@@ -64,26 +63,9 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         try
         {
-            //var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
-
-            //if (notificationSettings.EventTypes.Any(x =>
-            //        x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
-            //{
-            //    // Remove "All" and assign all other EventFormats
-            //    notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
-            //        .Cast<EventFormat>()
-            //        .Select(format => new EventNotificationSettings.NotificationEventType
-            //        {
-            //            EventType = format.ToString(),
-            //            ReceiveNotifications = true
-            //        })
-            //        .ToList();
-            //}
-
             if (notificationSettings.EventTypes.Any(x =>
                     x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
             {
-                // Replace with all EventFormats
                 notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
                     .Cast<EventFormat>()
                     .Select(format => new EventNotificationSettings.NotificationEventType
@@ -95,17 +77,16 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             }
             else
             {
-                // Remove "All" from the list
                 notificationSettings.EventTypes.RemoveAll(x =>
                     x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase));
             }
 
 
             List<EventFormat> eventFormats = notificationSettings.EventTypes
-                .Where(x => x.ReceiveNotifications) // Filter for ReceiveNotifications = true
+                .Where(x => x.ReceiveNotifications)
                 .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null) // Parse EventType to EventFormat
-                .Where(format => format.HasValue) // Exclude invalid EventTypes
-                .Cast<EventFormat>() // Convert nullable EventFormat to EventFormat
+                .Where(format => format.HasValue)
+                .Cast<EventFormat>()
                 .ToList();
 
             var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
@@ -177,18 +158,6 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var sb = new StringBuilder();
 
-        //if (notificationSettings.Locations.Any())
-        //{
-        //    sb.AppendLine("We'll email you about in-person and hybrid events in the following locations:");
-        //    sb.AppendLine();
-        //}
-
-        //foreach (var loc in notificationSettings.Locations)
-        //{
-        //    var locationText = loc.Radius == 0 ? $"* {loc.Name}, Across England" : $"* {loc.Name}, within {loc.Radius} miles";
-        //    sb.AppendLine(locationText);
-        //}
-
         var inPersonEvents = notificationSettings.EventTypes
             .Where(x => x.EventType.Equals("InPerson", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
         var hybridEvents = notificationSettings.EventTypes
@@ -210,7 +179,6 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             sb.AppendLine();
         }
 
-
         return sb.ToString();
     }
 
@@ -226,13 +194,13 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        var inPersonAndHybridTotalCount = eventListings.Sum(e => e.HybridCount+e.InPersonCount);
-        var onlineTotalCount = eventListings.Sum(e => e.OnlineCount);
-        //var inPersonAndHybridTotalCount = inPersonAndHybridEvents
-        //    .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
+        var inPersonAndHybridTotalCount = eventListings
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+            .Sum(e => e.TotalCount);
 
-        //var onlineTotalCount = onlineEvents
-        //    .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
+        var onlineTotalCount = eventListings
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
+            .Sum(e => e.TotalCount);
 
         var onlineEventListing = new EventListingDTO
         {
@@ -244,7 +212,6 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             .ToList()
         };
 
-        // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
             var inPersonEvents = notificationSettings.EventTypes
@@ -268,16 +235,12 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
                 sb.AppendLine();
             }
 
-            //sb.AppendLine($"#In-person and hybrid ({inPersonAndHybridTotalCount} events)");
-            //sb.AppendLine();
-
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
                 AppendLocationEvents(sb, locationEvents, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
-        // Process Online Events
         if (onlineEvents.Any())
         {
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
@@ -303,7 +266,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
         {
             var locationHeaderText = locationEvents.Radius == 0
                 ? $"##Across England ({filteredEvents.Count} events)"
-                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({locationEvents.TotalCount} events)";
             sb.AppendLine(locationHeaderText);
             sb.AppendLine();
         }
