@@ -181,7 +181,7 @@ public class EventNotificationService : IEventNotificationService
             .OrderBy(ev => ev.Start)
             .Take(3)
             .ToList()
-            };
+        };
 
         // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
@@ -191,7 +191,7 @@ public class EventNotificationService : IEventNotificationService
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                AppendLocationEvents(sb, locationEvents, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
+                AppendLocationEvents(sb, locationEvents, employerAccountId, null, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
@@ -201,14 +201,14 @@ public class EventNotificationService : IEventNotificationService
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            AppendLocationEvents(sb, onlineEventListing, employerAccountId, EventFormat.Online);
+            AppendLocationEvents(sb, onlineEventListing, employerAccountId, onlineTotalCount, EventFormat.Online);
         }
 
         return sb.ToString();
     }
 
 
-    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, string employerAccountId, params EventFormat[] formatsToInclude)
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, string employerAccountId, int? onlineTotalCount, params EventFormat[] formatsToInclude)
     {
         var filteredEvents = locationEvents.CalendarEvents
             .Where(ev => formatsToInclude.Contains(ev.EventFormat))
@@ -260,7 +260,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {filteredEvents.Count} upcoming online events" :
+                    $"See all {onlineTotalCount} upcoming online events" :
                     $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
