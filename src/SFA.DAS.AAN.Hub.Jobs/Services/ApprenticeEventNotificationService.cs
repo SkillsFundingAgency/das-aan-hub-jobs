@@ -84,7 +84,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
 
             List<EventFormat> eventFormats = notificationSettings.EventTypes
                 .Where(x => x.ReceiveNotifications)
-                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null) // Parse EventType to EventFormat
+                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
                 .Where(format => format.HasValue)
                 .Cast<EventFormat>()
                 .ToList();
