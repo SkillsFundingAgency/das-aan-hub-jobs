@@ -28,26 +28,29 @@ public class EventQueryService : IEventQueryService
 
         foreach (var locationSetting in notificationSettings.Locations)
         {
-            var request = new GetNetworkEventsRequest
+            foreach (var eventType in eventFormats)
             {
-                Location = locationSetting.Name,
-                EventFormat = eventFormats,
-                Radius = locationSetting.Radius,
-            };
+                var request = new GetNetworkEventsRequest
+                {
+                    Location = locationSetting.Name,
+                    EventFormat = eventFormats,
+                    Radius = locationSetting.Radius,
+                };
 
-            var eventsQuery = BuildQueryStringParameters(request);
+                var eventsQuery = BuildQueryStringParameters(request);
 
-            var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
+                var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
-            _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+                _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
 
-            eventListings.Add(new EventListingDTO
-            {
-                TotalCount = eventList.TotalCount,
-                CalendarEvents = eventList.CalendarEvents,
-                Location = locationSetting.Name,
-                Radius = locationSetting.Radius
-            });
+                eventListings.Add(new EventListingDTO
+                {
+                    TotalCount = eventList.TotalCount,
+                    CalendarEvents = eventList.CalendarEvents,
+                    Location = locationSetting.Name,
+                    Radius = locationSetting.Radius
+                });
+            }
         }
 
         return eventListings;
