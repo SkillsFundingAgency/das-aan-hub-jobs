@@ -69,7 +69,7 @@ public class EventNotificationService : IEventNotificationService
         {
             var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
 
-            var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken); // gets only 10
+            var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
             var employerAccountTask = _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id);
 
             await Task.WhenAll(eventListingTask, employerAccountTask);
@@ -106,7 +106,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 { "first_name", firstName },
                 { "subject", subject },
-                { "event_listing_snippet", GetEventListingSnippet(events, notificationSetting, employerAccountId) },
+                { "event_listing_snippet", GetEventListingSnippet(events, employerAccountId) },
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
@@ -170,7 +170,7 @@ public class EventNotificationService : IEventNotificationService
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(List<EventListingDTO> eventListings, EventNotificationSettings notificationSetting, string employerAccountId)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListings, string employerAccountId)
     {
         var sb = new StringBuilder();
 
