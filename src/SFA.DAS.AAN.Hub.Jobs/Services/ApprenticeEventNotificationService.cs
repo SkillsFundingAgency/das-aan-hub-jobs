@@ -179,6 +179,12 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             sb.AppendLine();
         }
 
+        foreach (var loc in notificationSettings.Locations)
+        {
+            var locationText = loc.Radius == 0 ? $"* {loc.Name}, Across England" : $"* {loc.Name}, within {loc.Radius} miles";
+            sb.AppendLine(locationText);
+        }
+
         return sb.ToString();
     }
 
