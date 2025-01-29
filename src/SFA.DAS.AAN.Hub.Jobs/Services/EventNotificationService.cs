@@ -106,7 +106,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 { "first_name", firstName },
                 { "subject", subject },
-                { "event_listing_snippet", GetEventListingSnippet(events, employerAccountId) },
+                { "event_listing_snippet", GetEventListingSnippet(events, notificationSetting, employerAccountId) },
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
@@ -140,9 +140,24 @@ public class EventNotificationService : IEventNotificationService
     {
         var sb = new StringBuilder();
 
-        if (notificationSettings.Locations.Any())
+        var inPersonEvents = notificationSettings.EventTypes
+            .Where(x => x.EventType.Equals("InPerson", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+        var hybridEvents = notificationSettings.EventTypes
+            .Where(x => x.EventType.Equals("Hybrid", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+
+        if (inPersonEvents.Any() && hybridEvents.Any())
         {
             sb.AppendLine("We'll email you about in-person and hybrid events in the following locations:");
+            sb.AppendLine();
+        }
+        else if (inPersonEvents.Any())
+        {
+            sb.AppendLine("We'll email you about in-person events in the following locations:");
+            sb.AppendLine();
+        }
+        else if (hybridEvents.Any())
+        {
+            sb.AppendLine("We'll email you about hybrid events in the following locations:");
             sb.AppendLine();
         }
 
@@ -155,23 +170,25 @@ public class EventNotificationService : IEventNotificationService
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(List<EventListingDTO> eventListings, string employerAccountId)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListings, EventNotificationSettings notificationSettings, string employerAccountId)
     {
         var sb = new StringBuilder();
 
         var inPersonAndHybridEvents = eventListings
-            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
-            .ToList();
+         .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+         .ToList();
 
         var onlineEvents = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        var inPersonAndHybridTotalCount = inPersonAndHybridEvents
-            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid));
+        var inPersonAndHybridTotalCount = eventListings
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+            .Sum(e => e.TotalCount);
 
-        var onlineTotalCount = onlineEvents
-            .Sum(e => e.CalendarEvents.Count(ev => ev.EventFormat == EventFormat.Online));
+        var onlineTotalCount = eventListings
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
+            .Sum(e => e.TotalCount);
 
         var onlineEventListing = new EventListingDTO
         {
@@ -181,34 +198,50 @@ public class EventNotificationService : IEventNotificationService
             .OrderBy(ev => ev.Start)
             .Take(3)
             .ToList()
-            };
+        };
 
-        // Process In-Person and Hybrid Events
         if (inPersonAndHybridEvents.Any())
         {
-            sb.AppendLine($"#In-person and hybrid ({inPersonAndHybridTotalCount} events)");
-            sb.AppendLine();
+            var inPersonEvents = notificationSettings.EventTypes
+                .Where(x => x.EventType.Equals("InPerson", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+            var hybridEvents = notificationSettings.EventTypes
+                .Where(x => x.EventType.Equals("Hybrid", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications);
+
+            if (inPersonEvents.Any() && hybridEvents.Any())
+            {
+                sb.AppendLine($"#In-person and hybrid events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
+            else if (inPersonEvents.Any())
+            {
+                sb.AppendLine($"#In-person events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
+            else if (hybridEvents.Any())
+            {
+                sb.AppendLine($"#Hybrid events ({inPersonAndHybridTotalCount} events)");
+                sb.AppendLine();
+            }
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                AppendLocationEvents(sb, locationEvents, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
+                AppendLocationEvents(sb, locationEvents, null, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
-        // Process Online Events
         if (onlineEvents.Any())
         {
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            AppendLocationEvents(sb, onlineEventListing, employerAccountId, EventFormat.Online);
+            AppendLocationEvents(sb, onlineEventListing, onlineTotalCount, employerAccountId, EventFormat.Online);
         }
 
         return sb.ToString();
     }
 
 
-    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, string employerAccountId, params EventFormat[] formatsToInclude)
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, int? onlineTotalCount, string employerAccountId, params EventFormat[] formatsToInclude)
     {
         var filteredEvents = locationEvents.CalendarEvents
             .Where(ev => formatsToInclude.Contains(ev.EventFormat))
@@ -220,8 +253,8 @@ public class EventNotificationService : IEventNotificationService
         if (!formatsToInclude.Contains(EventFormat.Online)) 
         {
             var locationHeaderText = locationEvents.Radius == 0
-                ? $"##Across England ({filteredEvents.Count} events)"
-                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+                ? $"##Across England ({locationEvents.TotalCount} events)"
+                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({locationEvents.TotalCount} events)";
             sb.AppendLine(locationHeaderText);
             sb.AppendLine();
         }
@@ -260,8 +293,8 @@ public class EventNotificationService : IEventNotificationService
             {
                 var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {filteredEvents.Count} upcoming online events" :
-                    $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
+                    $"See all {onlineTotalCount} upcoming online events" :
+                    $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
                     : $"We're only showing you the next {MaxEventsPerLocation} events in {locationEvents.Location}";
