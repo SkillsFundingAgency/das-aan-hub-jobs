@@ -67,30 +67,7 @@ public class EventNotificationService : IEventNotificationService
     {
         try
         {
-            if (notificationSettings.EventTypes.Any(x =>
-                  x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
-            {
-                notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
-                    .Cast<EventFormat>()
-                    .Select(format => new EventNotificationSettings.NotificationEventType
-                    {
-                        EventType = format.ToString(),
-                        ReceiveNotifications = true
-                    })
-                    .ToList();
-            }
-            else
-            {
-                notificationSettings.EventTypes.RemoveAll(x =>
-                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase));
-            }
-
-            List<EventFormat> eventFormats = notificationSettings.EventTypes
-                .Where(x => x.ReceiveNotifications)
-                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
-                .Where(format => format.HasValue)
-                .Cast<EventFormat>()
-                .ToList();
+            var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
 
             var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
             var employerAccountTask = _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id);
@@ -248,7 +225,7 @@ public class EventNotificationService : IEventNotificationService
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                AppendLocationEvents(sb, locationEvents, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
+                AppendLocationEvents(sb, locationEvents, null, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
@@ -257,14 +234,14 @@ public class EventNotificationService : IEventNotificationService
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            AppendLocationEvents(sb, onlineEventListing, employerAccountId, EventFormat.Online);
+            AppendLocationEvents(sb, onlineEventListing, onlineTotalCount, employerAccountId, EventFormat.Online);
         }
 
         return sb.ToString();
     }
 
 
-    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, string employerAccountId, params EventFormat[] formatsToInclude)
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, int? onlineTotalCount, string employerAccountId, params EventFormat[] formatsToInclude)
     {
         var filteredEvents = locationEvents.CalendarEvents
             .Where(ev => formatsToInclude.Contains(ev.EventFormat))
@@ -316,7 +293,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {locationEvents.TotalCount} upcoming online events" :
+                    $"See all {onlineTotalCount} upcoming online events" :
                     $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
