@@ -311,8 +311,8 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             {
                 var allEventsUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {filteredEvents.Count} upcoming online events" :
-                    $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
+                    $"See all {locationEvents.TotalCount} upcoming online events" :
+                    $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
                     : $"We're only showing you the next {MaxEventsPerLocation} events in {locationEvents.Location}";
