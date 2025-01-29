@@ -67,7 +67,30 @@ public class EventNotificationService : IEventNotificationService
     {
         try
         {
-            var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
+            if (notificationSettings.EventTypes.Any(x =>
+                  x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
+            {
+                notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
+                    .Cast<EventFormat>()
+                    .Select(format => new EventNotificationSettings.NotificationEventType
+                    {
+                        EventType = format.ToString(),
+                        ReceiveNotifications = true
+                    })
+                    .ToList();
+            }
+            else
+            {
+                notificationSettings.EventTypes.RemoveAll(x =>
+                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase));
+            }
+
+            List<EventFormat> eventFormats = notificationSettings.EventTypes
+                .Where(x => x.ReceiveNotifications)
+                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
+                .Where(format => format.HasValue)
+                .Cast<EventFormat>()
+                .ToList();
 
             var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
             var employerAccountTask = _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id);
