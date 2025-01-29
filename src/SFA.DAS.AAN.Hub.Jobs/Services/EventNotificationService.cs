@@ -276,8 +276,8 @@ public class EventNotificationService : IEventNotificationService
         if (!formatsToInclude.Contains(EventFormat.Online)) 
         {
             var locationHeaderText = locationEvents.Radius == 0
-                ? $"##Across England ({filteredEvents.Count} events)"
-                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({filteredEvents.Count} events)";
+                ? $"##Across England ({locationEvents.TotalCount} events)"
+                : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({locationEvents.TotalCount} events)";
             sb.AppendLine(locationHeaderText);
             sb.AppendLine();
         }
@@ -316,8 +316,8 @@ public class EventNotificationService : IEventNotificationService
             {
                 var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {filteredEvents.Count} upcoming online events" :
-                    $"See all {filteredEvents.Count} upcoming events {locationUrlText}";
+                    $"See all {locationEvents.TotalCount} upcoming online events" :
+                    $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
                     : $"We're only showing you the next {MaxEventsPerLocation} events in {locationEvents.Location}";
