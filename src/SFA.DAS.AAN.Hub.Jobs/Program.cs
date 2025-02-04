@@ -23,6 +23,7 @@ var host = new HostBuilder()
             .AddAanDataContext(context.Configuration)
             .ConfigureHttpClients(context.Configuration)
             .AddApplicationRegistrations()
+            .AddDasEncoding(context.Configuration)
             .AddNServiceBus(context.Configuration);
     })
     .Build();

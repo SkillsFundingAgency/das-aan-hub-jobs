@@ -15,6 +15,8 @@ public class Member
     public bool ReceiveNotifications { get; set; }
     public virtual List<MemberProfile> MemberProfiles { get; set; } = new List<MemberProfile>();
     public virtual List<MemberPreference> MemberPreferences { get; set; } = new List<MemberPreference>();
+    public virtual List<MemberNotificationEventFormat> MemberNotificationEventFormats { get; set; } = new List<MemberNotificationEventFormat>();
+    public virtual List<MemberNotificationLocation> MemberNotificationLocations { get; set; } = new List<MemberNotificationLocation>();
     public virtual List<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual List<Audit> Audits { get; set; } = new List<Audit>();
     public virtual Apprentice? Apprentice { get; set; }
