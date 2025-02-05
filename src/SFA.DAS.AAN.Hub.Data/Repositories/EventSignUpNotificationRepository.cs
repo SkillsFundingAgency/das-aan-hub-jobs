@@ -19,7 +19,7 @@ public class EventSignUpNotificationRepository : IEventSignUpNotificationReposit
 
         return await _context.Attendances
             .AsNoTracking()
-            .Where(a => a.AddedDate >= last24Hours && a.CalendarEvent.Member.ReceiveNotifications && a.IsAttending == true)
+            .Where(a => a.AddedDate >= last24Hours && (a.CalendarEvent.Member.ReceiveNotifications ?? false) && a.IsAttending == true)
             .Select(a => new EventSignUpNotification
             {
                 CalendarEventId = a.CalendarEvent.Id,

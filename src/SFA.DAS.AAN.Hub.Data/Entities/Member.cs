@@ -12,7 +12,7 @@ public class Member
     public DateTime LastUpdatedDate { get; set; }
     public bool? IsRegionalChair { get; set; }
     public DateTime? EndDate { get; set; }
-    public bool ReceiveNotifications { get; set; }
+    public bool? ReceiveNotifications { get; set; }
     public virtual List<MemberProfile> MemberProfiles { get; set; } = new List<MemberProfile>();
     public virtual List<MemberPreference> MemberPreferences { get; set; } = new List<MemberPreference>();
     public virtual List<MemberNotificationEventFormat> MemberNotificationEventFormats { get; set; } = new List<MemberNotificationEventFormat>();
