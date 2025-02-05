@@ -9,5 +9,7 @@ public enum EventFormat
     [Description("Online")]
     Online,
     [Description("Hybrid")]
-    Hybrid
+    Hybrid,
+    [Description("All")]
+    All
 }

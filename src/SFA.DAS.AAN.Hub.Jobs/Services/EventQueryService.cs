@@ -21,36 +21,46 @@ public class EventQueryService : IEventQueryService
         _outerApiClient = outerApiClient;
         _logger = logger;
     }
-
     public async Task<List<EventListingDTO>> GetEventListings(EventNotificationSettings notificationSettings, List<EventFormat> eventFormats, CancellationToken cancellationToken)
     {
-        var eventListings = new List<EventListingDTO>();
-
-        foreach (var locationSetting in notificationSettings.Locations)
+        try
         {
-            var request = new GetNetworkEventsRequest
+            var eventListings = new List<EventListingDTO>();
+
+            foreach (var locationSetting in notificationSettings.Locations)
             {
-                Location = locationSetting.Name,
-                EventFormat = eventFormats,
-                Radius = locationSetting.Radius,
-            };
+                foreach (var eventType in eventFormats)
+                {
+                    var request = new GetNetworkEventsRequest
+                    {
+                        Location = locationSetting.Name,
+                        EventFormat = new List<EventFormat> { eventType },
+                        Radius = locationSetting.Radius,
+                    };
 
-            var eventsQuery = BuildQueryStringParameters(request);
+                    var eventsQuery = BuildQueryStringParameters(request);
 
-            var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
+                    var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
-            _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+                    _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
 
-            eventListings.Add(new EventListingDTO
-            {
-                TotalCount = eventList.TotalCount,
-                CalendarEvents = eventList.CalendarEvents,
-                Location = locationSetting.Name,
-                Radius = locationSetting.Radius
-            });
+                    eventListings.Add(new EventListingDTO
+                    {
+                        TotalCount = eventList.TotalCount,
+                        CalendarEvents = eventList.CalendarEvents,
+                        Location = locationSetting.Name,
+                        Radius = locationSetting.Radius
+                    });
+                }
+            }
+
+            return eventListings;
         }
-
-        return eventListings;
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     public static Dictionary<string, string[]> BuildQueryStringParameters(GetNetworkEventsRequest request)
