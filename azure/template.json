@@ -90,7 +90,7 @@
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
     "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
-    "apprenticeEventNotificationsFunctionSchedule": "0 9 1 * *"
+    "apprenticeEventNotificationsFunctionSchedule": "0 9 1 * *",
     "eventNotificationFunctionSchedule": "0 9 1 * *"
   },
   "resources": [
