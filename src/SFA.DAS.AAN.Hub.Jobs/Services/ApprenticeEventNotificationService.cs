@@ -63,47 +63,46 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         try
         {
-            if (notificationSettings.EventTypes.Any(x =>
-                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase) && x.ReceiveNotifications))
+            if (notificationSettings.MemberDetails.Email == "ratheesh.ri@education.gov.uk")
             {
-                notificationSettings.EventTypes = Enum.GetValues(typeof(EventFormat))
+                if (notificationSettings.EventTypes.Any(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All && x.ReceiveNotifications))
+                {
+                    notificationSettings.EventTypes = Enum.GetValues<EventFormat>()
+                        .Where(format => format != EventFormat.All)
+                        .Select(format => new EventNotificationSettings.NotificationEventType
+                        {
+                            EventType = format.ToString(),
+                            ReceiveNotifications = true
+                        }).ToList();
+                }
+                else
+                {
+                    notificationSettings.EventTypes.RemoveAll(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All);
+                }
+
+                List<EventFormat> eventFormats = notificationSettings.EventTypes
+                    .Where(x => x.ReceiveNotifications)
+                    .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
+                    .Where(format => format.HasValue)
                     .Cast<EventFormat>()
-                    .Select(format => new EventNotificationSettings.NotificationEventType
-                    {
-                        EventType = format.ToString(),
-                        ReceiveNotifications = true
-                    })
                     .ToList();
-            }
-            else
-            {
-                notificationSettings.EventTypes.RemoveAll(x =>
-                    x.EventType.Equals("All", StringComparison.OrdinalIgnoreCase));
-            }
 
+                var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
 
-            List<EventFormat> eventFormats = notificationSettings.EventTypes
-                .Where(x => x.ReceiveNotifications)
-                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
-                .Where(format => format.HasValue)
-                .Cast<EventFormat>()
-                .ToList();
+                await Task.WhenAll(eventListingTask);
 
-            var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
+                var eventListings = eventListingTask.Result;
 
-            await Task.WhenAll(eventListingTask);
+                var eventCount = eventListings.Sum(e => e.TotalCount);
 
-            var eventListings = eventListingTask.Result;
+                if (eventCount > 0)
+                {
+                    var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
 
-            var eventCount = eventListings.Sum(e => e.TotalCount);
+                    _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
 
-            if (eventCount > 0)
-            {
-                var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
-
-                _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
-
-                await _messageSession.Send(command);
+                    await _messageSession.Send(command);
+                }
             }
         }
         catch (Exception ex)
@@ -194,15 +193,21 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
 
         var inPersonAndHybridEvents = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+            .GroupBy(e => e.Location)
+            .Select(g => new EventListingDTO
+            {
+                Location = g.First().Location,
+                Radius = g.First().Radius,
+                TotalCount = g.Sum(e => e.TotalCount),
+                CalendarEvents = g.SelectMany(e => e.CalendarEvents).ToList()
+            })
             .ToList();
 
         var onlineEvents = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        var inPersonAndHybridTotalCount = eventListings
-            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
-            .Sum(e => e.TotalCount);
+        var inPersonAndHybridTotalCount = inPersonAndHybridEvents.Sum(e => e.TotalCount);
 
         var onlineTotalCount = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
@@ -243,23 +248,24 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                AppendLocationEvents(sb, locationEvents, EventFormat.InPerson, EventFormat.Hybrid);
+                AppendLocationEvents(sb, locationEvents, null, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
         if (onlineEvents.Any())
         {
+            int totalCountSum = onlineEvents.Sum(e => e.TotalCount);
+
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            AppendLocationEvents(sb, onlineEventListing, EventFormat.Online);
+            AppendLocationEvents(sb, onlineEventListing, totalCountSum, EventFormat.Online);
         }
 
         return sb.ToString();
     }
 
-
-    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, params EventFormat[] formatsToInclude)
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, int? onlineTotalCount, params EventFormat[] formatsToInclude)
     {
         var filteredEvents = locationEvents.CalendarEvents
             .Where(ev => formatsToInclude.Contains(ev.EventFormat))
@@ -271,14 +277,14 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
         if (!formatsToInclude.Contains(EventFormat.Online))
         {
             var locationHeaderText = locationEvents.Radius == 0
-                ? $"##Across England ({filteredEvents.Count} events)"
+                ? $"##{locationEvents.Location}, Across England ({locationEvents.TotalCount} events)"
                 : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({locationEvents.TotalCount} events)";
             sb.AppendLine(locationHeaderText);
             sb.AppendLine();
         }
 
         var locationUrlText = locationEvents.Radius == 0
-            ? $"across England"
+            ? $"across England ,{locationEvents.Location}"
             : $"within {locationEvents.Radius} miles  of {locationEvents.Location}";
 
         var eventsDisplayed = 0;
@@ -311,7 +317,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             {
                 var allEventsUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
-                    $"See all {locationEvents.TotalCount} upcoming online events" :
+                    $"See all {onlineTotalCount} upcoming online events" :
                     $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";
                 var allEventsText = calendarEvent.EventFormat == EventFormat.Online
                     ? $"We're only showing you the next {MaxEventsPerLocation} online events"
