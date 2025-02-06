@@ -63,46 +63,43 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         try
         {
-            if (notificationSettings.MemberDetails.Email == "ratheesh.ri@education.gov.uk")
+            if (notificationSettings.EventTypes.Any(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All && x.ReceiveNotifications))
             {
-                if (notificationSettings.EventTypes.Any(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All && x.ReceiveNotifications))
-                {
-                    notificationSettings.EventTypes = Enum.GetValues<EventFormat>()
-                        .Where(format => format != EventFormat.All)
-                        .Select(format => new EventNotificationSettings.NotificationEventType
-                        {
-                            EventType = format.ToString(),
-                            ReceiveNotifications = true
-                        }).ToList();
-                }
-                else
-                {
-                    notificationSettings.EventTypes.RemoveAll(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All);
-                }
+                notificationSettings.EventTypes = Enum.GetValues<EventFormat>()
+                    .Where(format => format != EventFormat.All)
+                    .Select(format => new EventNotificationSettings.NotificationEventType
+                    {
+                        EventType = format.ToString(),
+                        ReceiveNotifications = true
+                    }).ToList();
+            }
+            else
+            {
+                notificationSettings.EventTypes.RemoveAll(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All);
+            }
 
-                List<EventFormat> eventFormats = notificationSettings.EventTypes
-                    .Where(x => x.ReceiveNotifications)
-                    .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
-                    .Where(format => format.HasValue)
-                    .Cast<EventFormat>()
-                    .ToList();
+            List<EventFormat> eventFormats = notificationSettings.EventTypes
+                .Where(x => x.ReceiveNotifications)
+                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
+                .Where(format => format.HasValue)
+                .Cast<EventFormat>()
+                .ToList();
 
-                var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
+            var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
 
-                await Task.WhenAll(eventListingTask);
+            await Task.WhenAll(eventListingTask);
 
-                var eventListings = eventListingTask.Result;
+            var eventListings = eventListingTask.Result;
 
-                var eventCount = eventListings.Sum(e => e.TotalCount);
+            var eventCount = eventListings.Sum(e => e.TotalCount);
 
-                if (eventCount > 0)
-                {
-                    var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
+            if (eventCount > 0)
+            {
+                var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
 
-                    _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+                _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
 
-                    await _messageSession.Send(command);
-                }
+                await _messageSession.Send(command);
             }
         }
         catch (Exception ex)
