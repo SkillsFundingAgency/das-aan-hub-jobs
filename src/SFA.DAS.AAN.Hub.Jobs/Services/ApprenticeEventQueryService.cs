@@ -37,7 +37,7 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
                         EventFormat = new List<EventFormat> { eventType }
                     };
 
-                    var eventsQuery = BuildQueryStringParameters(request);
+                    var eventsQuery = BuildOnlineOnlyQueryStringParameters();
 
                     var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
@@ -93,6 +93,13 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
             Console.WriteLine(e);
             throw;
         }
+    }
+
+    public static Dictionary<string, string[]> BuildOnlineOnlyQueryStringParameters()
+    {
+        var result = new Dictionary<string, string[]>();
+        result.Add("eventFormat", new[] { "Online" });
+        return result;
     }
 
     public static Dictionary<string, string[]> BuildQueryStringParameters(GetApprenticeNetworkEventsRequest request)
