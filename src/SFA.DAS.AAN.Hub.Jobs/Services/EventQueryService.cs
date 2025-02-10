@@ -27,6 +27,22 @@ public class EventQueryService : IEventQueryService
         {
             var eventListings = new List<EventListingDTO>();
 
+            //Handle online-only
+            if (!notificationSettings.Locations.Any() && notificationSettings.EventTypes.Any(x => x.EventType == "Online"))
+            {
+                var onlineQuery = BuildOnlineOnlyQueryStringParameters();
+                var onlineEventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, onlineQuery, cancellationToken);
+                eventListings.Add(new EventListingDTO
+                {
+                    TotalCount = onlineEventList.TotalCount,
+                    CalendarEvents = onlineEventList.CalendarEvents,
+                    Location = "",
+                    Radius = 0
+                });
+
+                return eventListings;
+            }
+
             foreach (var locationSetting in notificationSettings.Locations)
             {
                 foreach (var eventType in eventFormats)
@@ -61,6 +77,13 @@ public class EventQueryService : IEventQueryService
             Console.WriteLine(e);
             throw;
         }
+    }
+
+    public static Dictionary<string, string[]> BuildOnlineOnlyQueryStringParameters()
+    {
+        var result = new Dictionary<string, string[]>();
+        result.Add("eventFormat", new[] { "Online" });
+        return result;
     }
 
     public static Dictionary<string, string[]> BuildQueryStringParameters(GetNetworkEventsRequest request)
