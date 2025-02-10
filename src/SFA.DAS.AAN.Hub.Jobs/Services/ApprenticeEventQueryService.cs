@@ -28,30 +28,61 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
         {
             var eventListings = new List<EventListingDTO>();
 
-            foreach (var locationSetting in notificationSettings.Locations)
+            if (notificationSettings.Locations == null || !notificationSettings.Locations.Any())
             {
                 foreach (var eventType in eventFormats)
                 {
                     var request = new GetApprenticeNetworkEventsRequest
                     {
-                        Location = locationSetting.Name,
-                        EventFormat = new List<EventFormat> { eventType },
-                        Radius = locationSetting.Radius,
+                        EventFormat = new List<EventFormat> { eventType }
                     };
 
-                    var eventsQuery = BuildQueryStringParameters(request);
+                    var eventsQuery = BuildOnlineOnlyQueryStringParameters();
 
                     var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
-                    _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+                    _logger.LogInformation("Number of events found: {count}", eventList.TotalCount);
 
                     eventListings.Add(new EventListingDTO
                     {
                         TotalCount = eventList.TotalCount,
                         CalendarEvents = eventList.CalendarEvents,
-                        Location = locationSetting.Name,
-                        Radius = locationSetting.Radius
                     });
+                }
+            }
+            else
+            {
+                foreach (var locationSetting in notificationSettings.Locations)
+                {
+                    {
+                        foreach (var eventType in eventFormats)
+                        {
+                            var request = new GetApprenticeNetworkEventsRequest
+                            {
+                                EventFormat = new List<EventFormat> { eventType }
+                            };
+
+                            if (eventType != EventFormat.Online)
+                            {
+                                request.Location = locationSetting.Name;
+                                request.Radius = locationSetting.Radius;
+                            }
+
+                            var eventsQuery = BuildQueryStringParameters(request);
+
+                            var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
+
+                            _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+
+                            eventListings.Add(new EventListingDTO
+                            {
+                                TotalCount = eventList.TotalCount,
+                                CalendarEvents = eventList.CalendarEvents,
+                                Location = locationSetting.Name,
+                                Radius = locationSetting.Radius
+                            });
+                        }
+                    }
                 }
             }
 
@@ -62,6 +93,13 @@ public class ApprenticeEventQueryService : IApprenticeEventQueryService
             Console.WriteLine(e);
             throw;
         }
+    }
+
+    public static Dictionary<string, string[]> BuildOnlineOnlyQueryStringParameters()
+    {
+        var result = new Dictionary<string, string[]>();
+        result.Add("eventFormat", new[] { "Online" });
+        return result;
     }
 
     public static Dictionary<string, string[]> BuildQueryStringParameters(GetApprenticeNetworkEventsRequest request)
