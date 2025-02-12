@@ -50,18 +50,18 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
 
         private static void AddApprenticeOuterApiClient(IServiceCollection services, IConfiguration configuration)
         {
-            var outerApiConfig = configuration.GetSection(nameof(ApplicationConfiguration)).Get<ApplicationConfiguration>().ApprenticeAanOuterApiConfiguration;
+            //var outerApiConfig = configuration.GetSection(nameof(ApplicationConfiguration)).Get<ApplicationConfiguration>().ApprenticeAanOuterApiConfiguration;
 
-            services.AddTransient<IApimClientConfiguration>((_) => outerApiConfig);
+            //services.AddTransient<IApimClientConfiguration>((_) => outerApiConfig);
 
-            services.AddScoped<Http.MessageHandlers.DefaultHeadersHandler>();
-            services.AddScoped<Http.MessageHandlers.LoggingMessageHandler>();
-            services.AddScoped<Http.MessageHandlers.ApimHeadersHandler>();
+            //services.AddScoped<Http.MessageHandlers.DefaultHeadersHandler>();
+            //services.AddScoped<Http.MessageHandlers.LoggingMessageHandler>();
+            //services.AddScoped<Http.MessageHandlers.ApimHeadersHandler>();
 
-            services.AddRestEaseClient<IApprenticeOuterApiClient>(outerApiConfig.ApiBaseUrl)
-                .AddHttpMessageHandler<Http.MessageHandlers.DefaultHeadersHandler>()
-                .AddHttpMessageHandler<Http.MessageHandlers.ApimHeadersHandler>()
-                .AddHttpMessageHandler<Http.MessageHandlers.LoggingMessageHandler>();
+            //services.AddRestEaseClient<IApprenticeOuterApiClient>(outerApiConfig.ApiBaseUrl)
+            //    .AddHttpMessageHandler<Http.MessageHandlers.DefaultHeadersHandler>()
+            //    .AddHttpMessageHandler<Http.MessageHandlers.ApimHeadersHandler>()
+            //    .AddHttpMessageHandler<Http.MessageHandlers.LoggingMessageHandler>();
         }
     }
 }
