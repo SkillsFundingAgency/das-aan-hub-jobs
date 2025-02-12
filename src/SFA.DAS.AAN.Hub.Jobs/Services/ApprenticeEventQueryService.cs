@@ -13,10 +13,10 @@ namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
 public class ApprenticeEventQueryService : IApprenticeEventQueryService
 {
-    private readonly IApprenticeOuterApiClient _outerApiClient;
+    private readonly IOuterApiClient _outerApiClient;
     private readonly ILogger<EventQueryService> _logger;
 
-    public ApprenticeEventQueryService(IApprenticeOuterApiClient outerApiClient, ILogger<EventQueryService> logger)
+    public ApprenticeEventQueryService(IOuterApiClient outerApiClient, ILogger<EventQueryService> logger)
     {
         _outerApiClient = outerApiClient;
         _logger = logger;
