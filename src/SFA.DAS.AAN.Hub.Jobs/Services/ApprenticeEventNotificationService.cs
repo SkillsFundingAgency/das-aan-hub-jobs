@@ -11,17 +11,16 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Helpers;
 using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
-public interface IEventNotificationService
+public interface IApprenticeEventNotificationService
 {
     Task<int> ProcessEventNotifications(CancellationToken cancellationToken);
 }
 
-public class EventNotificationService : IEventNotificationService
+public class ApprenticeEventNotificationService : IApprenticeEventNotificationService
 {
     private const int MaxEventsPerLocation = 3;
 
@@ -29,28 +28,25 @@ public class EventNotificationService : IEventNotificationService
     private readonly ILogger<EventNotificationService> _logger;
     private readonly ApplicationConfiguration _applicationConfiguration;
     private readonly IMessageSession _messageSession;
-    private readonly IEventQueryService _eventQueryService;
-    private readonly IEmployerAccountsService _employerAccountsService;
+    private readonly IApprenticeEventQueryService _apprenticeEventQueryService;
 
-    public EventNotificationService(
+    public ApprenticeEventNotificationService(
        IEventNotificationSettingsRepository memberRepository,
        IMessageSession messageSession,
        IOptions<ApplicationConfiguration> applicationConfigurationOptions,
        ILogger<EventNotificationService> logger,
-       IEventQueryService eventQueryService,
-       IEmployerAccountsService employerAccountsService)
+       IApprenticeEventQueryService apprenticeEventQueryService)
     {
         _memberRepository = memberRepository;
         _messageSession = messageSession;
         _applicationConfiguration = applicationConfigurationOptions.Value;
         _logger = logger;
-        _eventQueryService = eventQueryService;
-        _employerAccountsService = employerAccountsService;
+        _apprenticeEventQueryService = apprenticeEventQueryService;
     }
 
     public async Task<int> ProcessEventNotifications(CancellationToken cancellationToken)
     {
-        var notificationSettings = await _memberRepository.GetEventNotificationSettingsAsync(cancellationToken);
+        var notificationSettings = await _memberRepository.GetEventNotificationSettingsAsync(cancellationToken, UserType.Apprentice);
 
         _logger.LogInformation("Number of members receiving event notifications: {count}.", notificationSettings.Count);
 
@@ -67,21 +63,39 @@ public class EventNotificationService : IEventNotificationService
     {
         try
         {
-            var eventFormats = EventFormatParser.GetEventFormats(notificationSettings);
+            if (notificationSettings.EventTypes.Any(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All && x.ReceiveNotifications))
+            {
+                notificationSettings.EventTypes = Enum.GetValues<EventFormat>()
+                    .Where(format => format != EventFormat.All)
+                    .Select(format => new EventNotificationSettings.NotificationEventType
+                    {
+                        EventType = format.ToString(),
+                        ReceiveNotifications = true
+                    }).ToList();
+            }
+            else
+            {
+                notificationSettings.EventTypes.RemoveAll(x => Enum.TryParse(x.EventType, out EventFormat format) && format == EventFormat.All);
+            }
 
-            var eventListingTask = _eventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
-            var employerAccountTask = _employerAccountsService.GetEmployerUserAccounts(notificationSettings.MemberDetails.Id);
+            List<EventFormat> eventFormats = notificationSettings.EventTypes
+                .Where(x => x.ReceiveNotifications)
+                .Select(x => Enum.TryParse(x.EventType, true, out EventFormat format) ? format : (EventFormat?)null)
+                .Where(format => format.HasValue)
+                .Cast<EventFormat>()
+                .ToList();
 
-            await Task.WhenAll(eventListingTask, employerAccountTask);
+            var eventListingTask = _apprenticeEventQueryService.GetEventListings(notificationSettings, eventFormats, cancellationToken);
+
+            await Task.WhenAll(eventListingTask);
 
             var eventListings = eventListingTask.Result;
-            var employerAccountId = employerAccountTask.Result;
 
             var eventCount = eventListings.Sum(e => e.TotalCount);
 
-            if (eventCount > 0) 
+            if (eventCount > 0)
             {
-                var command = CreateSendCommand(notificationSettings, eventListings, eventCount, employerAccountId, cancellationToken);
+                var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
 
                 _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
 
@@ -94,25 +108,25 @@ public class EventNotificationService : IEventNotificationService
         }
     }
 
-    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, int eventCount, string employerAccountId, CancellationToken cancellationToken)
+    private SendEmailCommand CreateSendCommand(EventNotificationSettings notificationSetting, List<EventListingDTO> events, int eventCount, CancellationToken cancellationToken)
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
-        _logger.LogInformation("Employer Account used: {employerAccountId}.", employerAccountId);
-        var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/event-notification-settings";
-        var subject = eventCount == 1 ? "1 upcoming AAN event": $"{eventCount.ToString()} upcoming AAN events";
+        _logger.LogInformation("Email used: {email}.", targetEmail);
+        var unsubscribeURL = _applicationConfiguration.ApprenticeAanBaseUrl + "/event-notification-settings";
+        var subject = eventCount == 1 ? "1 upcoming AAN event" : $"{eventCount.ToString()} upcoming AAN events";
 
         var tokens = new Dictionary<string, string>
             {
                 { "first_name", firstName },
                 { "subject", subject },
-                { "event_listing_snippet", GetEventListingSnippet(events, notificationSetting, employerAccountId) },
+                { "event_listing_snippet", GetEventListingSnippet(events,notificationSetting) },
                 { "event_formats_snippet", GetEventFormatsSnippet(notificationSetting) },
                 { "locations_snippet", GetLocationsSnippet(notificationSetting) },
                 { "unsubscribe_url", unsubscribeURL}
             };
 
-        var templateId = _applicationConfiguration.Notifications.Templates["AANEmployerEventNotifications"];
+        var templateId = _applicationConfiguration.Notifications.Templates["AANApprenticeEventNotifications"];
 
         return new SendEmailCommand(templateId, targetEmail, tokens);
     }
@@ -121,13 +135,13 @@ public class EventNotificationService : IEventNotificationService
     {
         var sb = new StringBuilder();
 
-        foreach (var e in notificationSettings.EventTypes)
+        foreach (var e in notificationSettings.EventTypes.Where(x => x.ReceiveNotifications))
         {
             if (e.EventType == "InPerson")
             {
                 sb.AppendLine($"* in-person events");
             }
-            else 
+            else
             {
                 sb.AppendLine($"* {e.EventType.ToLower()} events");
             }
@@ -170,21 +184,27 @@ public class EventNotificationService : IEventNotificationService
         return sb.ToString();
     }
 
-    private string GetEventListingSnippet(List<EventListingDTO> eventListings, EventNotificationSettings notificationSettings, string employerAccountId)
+    private string GetEventListingSnippet(List<EventListingDTO> eventListings, EventNotificationSettings notificationSettings)
     {
         var sb = new StringBuilder();
 
         var inPersonAndHybridEvents = eventListings
-         .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
-         .ToList();
+            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
+            .GroupBy(e => e.Location)
+            .Select(g => new EventListingDTO
+            {
+                Location = g.First().Location,
+                Radius = g.First().Radius,
+                TotalCount = g.Sum(e => e.TotalCount),
+                CalendarEvents = g.SelectMany(e => e.CalendarEvents).ToList()
+            })
+            .ToList();
 
         var onlineEvents = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
             .ToList();
 
-        var inPersonAndHybridTotalCount = eventListings
-            .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.InPerson || ev.EventFormat == EventFormat.Hybrid))
-            .Sum(e => e.TotalCount);
+        var inPersonAndHybridTotalCount = inPersonAndHybridEvents.Sum(e => e.TotalCount);
 
         var onlineTotalCount = eventListings
             .Where(e => e.CalendarEvents.Any(ev => ev.EventFormat == EventFormat.Online))
@@ -225,23 +245,24 @@ public class EventNotificationService : IEventNotificationService
 
             foreach (var locationEvents in inPersonAndHybridEvents)
             {
-                AppendLocationEvents(sb, locationEvents, null, employerAccountId, EventFormat.InPerson, EventFormat.Hybrid);
+                AppendLocationEvents(sb, locationEvents, null, EventFormat.InPerson, EventFormat.Hybrid);
             }
         }
 
         if (onlineEvents.Any())
         {
+            int totalCountSum = onlineEvents.Sum(e => e.TotalCount);
+
             sb.AppendLine($"#Online events ({onlineTotalCount} events)");
             sb.AppendLine();
 
-            AppendLocationEvents(sb, onlineEventListing, onlineTotalCount, employerAccountId, EventFormat.Online);
+            AppendLocationEvents(sb, onlineEventListing, totalCountSum, EventFormat.Online);
         }
 
         return sb.ToString();
     }
 
-
-    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, int? onlineTotalCount, string employerAccountId, params EventFormat[] formatsToInclude)
+    private void AppendLocationEvents(StringBuilder sb, EventListingDTO locationEvents, int? onlineTotalCount, params EventFormat[] formatsToInclude)
     {
         var filteredEvents = locationEvents.CalendarEvents
             .Where(ev => formatsToInclude.Contains(ev.EventFormat))
@@ -250,24 +271,24 @@ public class EventNotificationService : IEventNotificationService
         if (!filteredEvents.Any())
             return;
 
-        if (!formatsToInclude.Contains(EventFormat.Online)) 
+        if (!formatsToInclude.Contains(EventFormat.Online))
         {
             var locationHeaderText = locationEvents.Radius == 0
-                ? $"##Across England ({locationEvents.TotalCount} events)"
+                ? $"##{locationEvents.Location}, Across England ({locationEvents.TotalCount} events)"
                 : $"##{locationEvents.Location}, within {locationEvents.Radius} miles ({locationEvents.TotalCount} events)";
             sb.AppendLine(locationHeaderText);
             sb.AppendLine();
         }
 
         var locationUrlText = locationEvents.Radius == 0
-            ? $"across England"
+            ? $"across England ,{locationEvents.Location}"
             : $"within {locationEvents.Radius} miles  of {locationEvents.Location}";
 
         var eventsDisplayed = 0;
 
         foreach (var calendarEvent in filteredEvents)
         {
-            var calendarEventUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events/" + calendarEvent.CalendarEventId.ToString();
+            var calendarEventUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events/" + calendarEvent.CalendarEventId;
 
             sb.AppendLine($"##[{calendarEvent.Title}]({calendarEventUrl})");
             sb.AppendLine();
@@ -291,7 +312,7 @@ public class EventNotificationService : IEventNotificationService
 
             if (eventsDisplayed >= MaxEventsPerLocation)
             {
-                var allEventsUrl = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/network-events";
+                var allEventsUrl = _applicationConfiguration.ApprenticeAanBaseUrl + "/network-events";
                 var allEventsUrlText = calendarEvent.EventFormat == EventFormat.Online ?
                     $"See all {onlineTotalCount} upcoming online events" :
                     $"See all {locationEvents.TotalCount} upcoming events {locationUrlText}";

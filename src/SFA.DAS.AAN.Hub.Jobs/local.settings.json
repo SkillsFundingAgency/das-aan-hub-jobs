@@ -10,7 +10,8 @@
     "MemberDataCleanupFunctionSchedule": "0 */3 * * * *",
     "SynchroniseApprenticeDetailsFunctionSchedule": "0 0 0 * * *",
     "EventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
-    "EventNotificationFunctionSchedule": "0 9 * * TUE"
+    "EventNotificationFunctionSchedule": "0 9 * * TUE",
+    "ApprenticeEventNotificationsFunctionSchedule": "0 9 * * TUE"
   },
   "AzureWebJobs.SendNotificationsFunction.Disabled": "true",
   "AzureWebJobs.MemberDataCleanupFunction.Disabled": "true",

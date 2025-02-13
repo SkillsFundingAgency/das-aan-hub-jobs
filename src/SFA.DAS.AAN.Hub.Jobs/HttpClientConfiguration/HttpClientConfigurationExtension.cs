@@ -46,5 +46,6 @@ namespace SFA.DAS.AAN.Hub.Jobs.HttpClientConfiguration
                 .AddHttpMessageHandler<Http.MessageHandlers.ApimHeadersHandler>()
                 .AddHttpMessageHandler<Http.MessageHandlers.LoggingMessageHandler>();
         }
+      
     }
 }

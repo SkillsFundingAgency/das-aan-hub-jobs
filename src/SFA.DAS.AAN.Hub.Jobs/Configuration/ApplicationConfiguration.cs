@@ -9,6 +9,7 @@ public class ApplicationConfiguration
     public Uri AdminAanBaseUrl { get; set; }
     public ApprenticeAccountsApiConfiguration ApprenticeAccountsApiConfiguration { get; set; }
     public AanOuterApiConfiguration AanOuterApiConfiguration { get; set; }
+    public ApprenticeAanOuterApiConfiguration ApprenticeAanOuterApiConfiguration { get; set; }
     public NotificationsConfiguration Notifications { get; set; }
     public MemberDataCleanupConfiguration MemberDataCleanup { get; set; }
 }

@@ -90,6 +90,7 @@
     "notificationsSchedule": "0 */5 * * * *",
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
     "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
+    "apprenticeEventNotificationsFunctionSchedule": "0 9 1 * *",
     "eventNotificationFunctionSchedule": "0 9 1 * *"
   },
   "resources": [
@@ -281,6 +282,10 @@
                 {
                   "name": "EventNotificationFunctionSchedule",
                   "value": "[variables('eventNotificationFunctionSchedule')]"
+                },
+                {
+                  "name": "ApprenticeEventNotificationsFunctionSchedule",
+                  "value": "[variables('apprenticeEventNotificationsFunctionSchedule')]"
                 }
               ]
             }
@@ -335,7 +340,7 @@
             "value": "[parameters('sharedApimName')]"
           },
           "subscriptionName": {
-            "value": "[concat(variables('functionAppName'), '-ApprenticeAan')]"
+            "value": "[concat(variables('functionAppName'), '-2')]"
           },
           "subscriptionScope": {
             "value": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('sharedApimResourceGroup'), '/providers/Microsoft.ApiManagement/service/', parameters('sharedApimName'), '/products/ApprenticeAanOuterApi')]"
