@@ -77,6 +77,18 @@
     "utcValue": {
       "type": "string",
       "defaultValue": "[utcNow()]"
+    },
+    "enableRouteTableAssociation": {
+      "type": "bool",
+      "metadata": {
+        "description": "Determines whether to enable route table assocication on subnet"
+      }
+    },
+    "SharedRouteTableName": {
+      "type": "string",
+      "metadata": {
+        "description": "Route table name, used to get resource ID"
+      }
     }
   },
   "variables": {
@@ -91,7 +103,11 @@
     "synchroniseApprenticeDetailsSchedule": "0 0 0 * * *",
     "eventSignUpNotificationFunctionSchedule": "0 0 15 * * *",
     "apprenticeEventNotificationsFunctionSchedule": "0 9 1 * *",
-    "eventNotificationFunctionSchedule": "0 9 1 * *"
+    "eventNotificationFunctionSchedule": "0 9 1 * *",
+    "routeTableId": {
+      "id": "[resourceId(subscription().subscriptionId, parameters('sharedEnvResourceGroup'), 'Microsoft.Network/routeTables', parameters('SharedRouteTableName'))]"
+    },
+    "emptyObject": {}
   },
   "resources": [
     {
@@ -128,6 +144,9 @@
           },
           "delegations": {
             "value": "[parameters('subnetDelegations')]"
+          },
+          "routeTable": {
+            "value": "[if(parameters('enableRouteTableAssociation'), variables('routeTableId') , variables('emptyObject'))]"
           }
         }
       },
