@@ -1,10 +1,11 @@
-﻿using Microsoft.Azure.Functions.Worker;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Jobs.Services;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Functions;
+
 public class MemberDataCleanupFunction
 {
     private readonly IMemberDataCleanupService _memberDataCleanupService;
@@ -22,6 +23,6 @@ public class MemberDataCleanupFunction
 
         var count = await _memberDataCleanupService.ProcessMemberDataCleanup(cancellationToken);
 
-        _logger.LogInformation("Data anonymised for {count} members.", count);
+        _logger.LogInformation("Data anonymised for {Count} members.", count);
     }
 }

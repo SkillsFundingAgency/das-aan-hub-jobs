@@ -1,4 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data;
@@ -6,11 +11,6 @@ using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using static SFA.DAS.AAN.Hub.Jobs.Constants.Constants;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
@@ -70,7 +70,7 @@ public class NotificationService : INotificationService
         {
             var notificationId = notification.Id;
             // catch all exceptions to allow other notifications to go forward
-            _logger.LogError(ex, "Error sending out notification with id: {notificationId}", notificationId);
+            _logger.LogError(ex, "Error sending out notification with id: {NotificationId}", notificationId);
         }
     }
 

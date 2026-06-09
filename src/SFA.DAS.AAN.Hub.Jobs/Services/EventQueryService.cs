@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.Logging;
-using SFA.DAS.AAN.Hub.Data.Dto;
-using SFA.DAS.AAN.Hub.Data.Entities;
-using SFA.DAS.AAN.Hub.Data.Interfaces;
-using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using SFA.DAS.AAN.Hub.Data.Dto;
+using SFA.DAS.AAN.Hub.Data.Entities;
+using SFA.DAS.AAN.Hub.Data.Interfaces;
+using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -58,7 +58,7 @@ public class EventQueryService : IEventQueryService
 
                     var eventList = await _outerApiClient.GetCalendarEvents(notificationSettings.MemberDetails.Id, eventsQuery, cancellationToken);
 
-                    _logger.LogInformation("Number of events found: {count} for location {location}.", eventList.TotalCount, locationSetting.Name);
+                    _logger.LogInformation("Number of events found: {Count} for location {Location}.", eventList.TotalCount, locationSetting.Name);
 
                     eventListings.Add(new EventListingDTO
                     {

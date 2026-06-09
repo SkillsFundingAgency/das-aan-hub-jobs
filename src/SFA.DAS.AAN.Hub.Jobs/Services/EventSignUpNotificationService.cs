@@ -1,17 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NServiceBus;
+using SFA.DAS.AAN.Hub.Data.Dto;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using System.Collections.Generic;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Dto;
-using Microsoft.Extensions.Options;
-using System.Text;
-using System.Globalization;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -47,7 +47,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         // get all events
         var pendingEventSignUpNotifications = await _eventSignUpNotificationRepository.GetEventSignUpNotification();
 
-        _logger.LogInformation("Number of members signed up to an event in the last 24 hours: {count}.", pendingEventSignUpNotifications.Count);
+        _logger.LogInformation("Number of members signed up to an event in the last 24 hours: {Count}.", pendingEventSignUpNotifications.Count);
 
         if (pendingEventSignUpNotifications.Count == 0) return 0;
 
@@ -67,7 +67,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         try
         {
             var command = CreateSendCommand(events, cancellationToken);
-            _logger.LogInformation("Sending email to member {memberId}.", memberId);
+            _logger.LogInformation("Sending email to member {MemberId}.", memberId);
             await _messageSession.Send(command);
         }
         catch (Exception ex)
@@ -126,7 +126,7 @@ public class EventSignUpNotificationService : IEventSignUpNotificationService
         return sb.ToString();
     }
 
-    private string GetCalendarDateFormat(DateTime startTime, DateTime endTime) 
+    private string GetCalendarDateFormat(DateTime startTime, DateTime endTime)
     {
         var formattedStartDate = startTime.ToString("dd MMMM yyyy, hh:mmtt", CultureInfo.InvariantCulture);
         formattedStartDate = formattedStartDate.Replace(" am", "am").Replace(" pm", "pm");

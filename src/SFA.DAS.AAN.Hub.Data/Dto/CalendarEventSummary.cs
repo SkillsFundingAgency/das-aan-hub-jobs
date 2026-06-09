@@ -6,7 +6,7 @@ public class CalendarEventSummary
 {
     public Guid CalendarEventId { get; set; }
 
-    public string CalendarName { get; set; }
+    public string CalendarName { get; set; } = string.Empty;
 
     public EventFormat EventFormat { get; set; }
 
@@ -14,13 +14,13 @@ public class CalendarEventSummary
 
     public DateTime End { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
 
-    public string Summary { get; set; }
+    public string Summary { get; set; } = string.Empty;
 
-    public string Location { get; set; }
+    public string Location { get; set; } = string.Empty;
 
-    public string Postcode { get; set; }
+    public string Postcode { get; set; } = string.Empty;
 
     public double? Longitude { get; set; }
 
