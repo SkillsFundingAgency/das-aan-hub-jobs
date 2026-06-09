@@ -1,4 +1,5 @@
-﻿using Azure.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Data.Repositories;
-using System.Diagnostics.CodeAnalysis;
 
 namespace SFA.DAS.AAN.Hub.Data.Extensions;
 
@@ -16,7 +16,7 @@ public static class AddAanDataContextExtension
     private static readonly string AzureResource = "https://database.windows.net/";
 
     private static readonly ChainedTokenCredential AzureTokenProvider = new ChainedTokenCredential(
-        new ManagedIdentityCredential(),
+        new ManagedIdentityCredential(new ManagedIdentityCredentialOptions()),
         new AzureCliCredential(),
         new VisualStudioCodeCredential(),
         new VisualStudioCredential()
