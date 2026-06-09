@@ -28,7 +28,7 @@ The notification job uses NServiceBus protocol to send a message per notificatio
 
 You can find the latest config file in [das-employer-config repository](https://github.com/SkillsFundingAgency/das-employer-config/blob/master/das-aan-hub-jobs/SFA.DAS.AANHub.Jobs.json). 
 
-In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.json file with following content:
+In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add `local.settings.json` file with following content:
 ```
 {
   "IsEncrypted": false,
