@@ -27,8 +27,6 @@
     </PackageReference>
     <PackageReference Include="NUnit3TestAdapter" Version="6.2.0" />
   </ItemGroup>
-  <!--Transitive packages-->
-  <!--Transitive packages-->
   <ItemGroup>
     <ProjectReference Include="..\SFA.DAS.AAN.Hub.Data\SFA.DAS.AAN.Hub.Data.csproj" />
   </ItemGroup>
