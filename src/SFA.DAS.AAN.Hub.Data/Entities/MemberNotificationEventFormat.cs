@@ -4,7 +4,7 @@ public class MemberNotificationEventFormat
 {
     public long Id { get; set; }
     public Guid MemberId { get; set; }
-    public Member Member { get; set; } = new Member();
-    public string EventFormat { get; set; } = string.Empty;
+    public Member Member { get; set; } = null!;
+    public string EventFormat { get; set; } = null!;
     public bool ReceiveNotifications { get; set; }
 }
