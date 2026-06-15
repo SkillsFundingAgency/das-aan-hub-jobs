@@ -1,18 +1,18 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data.Dto;
+using SFA.DAS.AAN.Hub.Data.Entities;
+using SFA.DAS.AAN.Hub.Data.Helpers;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using System.Collections.Generic;
-using System.Text;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Helpers;
-using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -52,7 +52,7 @@ public class EventNotificationService : IEventNotificationService
     {
         var notificationSettings = await _memberRepository.GetEventNotificationSettingsAsync(cancellationToken);
 
-        _logger.LogInformation("Number of members receiving event notifications: {count}.", notificationSettings.Count);
+        _logger.LogInformation("Number of members receiving event notifications: {Count}.", notificationSettings.Count);
 
         if (notificationSettings.Count == 0) return 0;
 
@@ -79,18 +79,18 @@ public class EventNotificationService : IEventNotificationService
 
             var eventCount = eventListings.Sum(e => e.TotalCount);
 
-            if (eventCount > 0) 
+            if (eventCount > 0)
             {
                 var command = CreateSendCommand(notificationSettings, eventListings, eventCount, employerAccountId, cancellationToken);
 
-                _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+                _logger.LogInformation("Sending email to member {MemberId}.", notificationSettings.MemberDetails.Id);
 
                 await _messageSession.Send(command);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Sending email FAILED to {memberId}!", notificationSettings.MemberDetails.Id);
+            _logger.LogError(ex, "Sending email FAILED to {MemberId}!", notificationSettings.MemberDetails.Id);
         }
     }
 
@@ -98,9 +98,9 @@ public class EventNotificationService : IEventNotificationService
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
-        _logger.LogInformation("Employer Account used: {employerAccountId}.", employerAccountId);
+        _logger.LogInformation("Employer Account used: {EmployerAccountId}.", employerAccountId);
         var unsubscribeURL = _applicationConfiguration.EmployerAanBaseUrl.ToString() + "accounts/" + employerAccountId.ToString() + "/event-notification-settings";
-        var subject = eventCount == 1 ? "1 upcoming AAN event": $"{eventCount.ToString()} upcoming AAN events";
+        var subject = eventCount == 1 ? "1 upcoming AAN event" : $"{eventCount.ToString()} upcoming AAN events";
 
         var tokens = new Dictionary<string, string>
             {
@@ -127,7 +127,7 @@ public class EventNotificationService : IEventNotificationService
             {
                 sb.AppendLine($"* in-person events");
             }
-            else 
+            else
             {
                 sb.AppendLine($"* {e.EventType.ToLower()} events");
             }
@@ -250,7 +250,7 @@ public class EventNotificationService : IEventNotificationService
         if (!filteredEvents.Any())
             return;
 
-        if (!formatsToInclude.Contains(EventFormat.Online)) 
+        if (!formatsToInclude.Contains(EventFormat.Online))
         {
             var locationHeaderText = locationEvents.Radius == 0
                 ? $"##Across England ({locationEvents.TotalCount} events)"

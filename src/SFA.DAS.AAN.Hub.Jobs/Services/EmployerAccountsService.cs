@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Api.Clients;
 using SFA.DAS.Encoding;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -14,7 +14,7 @@ public class EmployerAccountsService : IEmployerAccountsService
     private readonly IEncodingService _encodingService;
     private readonly ILogger<EmployerAccountsService> _logger;
 
-    public EmployerAccountsService(IOuterApiClient outerApiClient, 
+    public EmployerAccountsService(IOuterApiClient outerApiClient,
         IEncodingService encodingService,
         ILogger<EmployerAccountsService> logger)
     {
@@ -29,7 +29,7 @@ public class EmployerAccountsService : IEmployerAccountsService
 
         var employerHashedAccountId = _encodingService.Encode(result.EmployerAccountId, EncodingType.AccountId);
 
-        _logger.LogInformation($"Encoded employer account id: {employerHashedAccountId}");
+        _logger.LogInformation("Encoded employer account id: {EmployerHashedAccountId}", employerHashedAccountId);
 
         return employerHashedAccountId;
     }

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
@@ -6,8 +8,6 @@ using SFA.DAS.Notifications.Messages.Commands;
 using SFA.DAS.NServiceBus.Configuration;
 using SFA.DAS.NServiceBus.Configuration.AzureServiceBus;
 using SFA.DAS.NServiceBus.Configuration.NewtonsoftJsonSerializer;
-using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Extensions;
 
@@ -54,14 +54,12 @@ internal static class AddNServiceBusExtension
             endpointConfiguration.UseAzureServiceBusTransport(nServiceBusConfiguration.NServiceBusConnectionString, s => s.AddRouting());
             startServiceBusEndpoint = true;
         }
-
+        services.AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
         if (startServiceBusEndpoint)
         {
             var endpointInstance = Endpoint.Start(endpointConfiguration).GetAwaiter().GetResult();
 
-            services
-                .AddSingleton(p => endpointInstance)
-                .AddSingleton<IMessageSession>(p => p.GetService<IEndpointInstance>());
+            services.AddSingleton(p => endpointInstance);
         }
 
     }

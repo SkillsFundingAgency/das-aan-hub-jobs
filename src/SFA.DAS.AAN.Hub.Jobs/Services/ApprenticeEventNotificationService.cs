@@ -1,17 +1,17 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NServiceBus;
 using SFA.DAS.AAN.Hub.Data.Dto;
+using SFA.DAS.AAN.Hub.Data.Entities;
 using SFA.DAS.AAN.Hub.Data.Interfaces;
 using SFA.DAS.AAN.Hub.Jobs.Configuration;
 using SFA.DAS.Notifications.Messages.Commands;
-using System.Collections.Generic;
-using System.Text;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
-using SFA.DAS.AAN.Hub.Data.Entities;
 
 namespace SFA.DAS.AAN.Hub.Jobs.Services;
 
@@ -48,7 +48,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var notificationSettings = await _memberRepository.GetEventNotificationSettingsAsync(cancellationToken, UserType.Apprentice);
 
-        _logger.LogInformation("Number of members receiving event notifications: {count}.", notificationSettings.Count);
+        _logger.LogInformation("Number of members receiving event notifications: {Count}.", notificationSettings.Count);
 
         if (notificationSettings.Count == 0) return 0;
 
@@ -97,14 +97,14 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
             {
                 var command = CreateSendCommand(notificationSettings, eventListings, eventCount, cancellationToken);
 
-                _logger.LogInformation("Sending email to member {memberId}.", notificationSettings.MemberDetails.Id);
+                _logger.LogInformation("Sending email to member {MemberId}.", notificationSettings.MemberDetails.Id);
 
                 await _messageSession.Send(command);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Sending email FAILED to {memberId}!", notificationSettings.MemberDetails.Id);
+            _logger.LogError(ex, "Sending email FAILED to {MemberId}!", notificationSettings.MemberDetails.Id);
         }
     }
 
@@ -112,7 +112,7 @@ public class ApprenticeEventNotificationService : IApprenticeEventNotificationSe
     {
         var targetEmail = notificationSetting.MemberDetails.Email;
         var firstName = notificationSetting.MemberDetails.FirstName;
-        _logger.LogInformation("Email used: {email}.", targetEmail);
+        _logger.LogInformation("Email used: {Email}.", targetEmail);
         var unsubscribeURL = _applicationConfiguration.ApprenticeAanBaseUrl + "/event-notification-settings";
         var subject = eventCount == 1 ? "1 upcoming AAN event" : $"{eventCount.ToString()} upcoming AAN events";
 

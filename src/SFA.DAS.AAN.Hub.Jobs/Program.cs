@@ -1,4 +1,5 @@
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SFA.DAS.AAN.Hub.Data.Extensions;
@@ -17,6 +18,7 @@ var host = new HostBuilder()
     {
         s
             .AddApplicationInsightsTelemetryWorkerService()
+            .AddTelemetryRegistration((IConfigurationRoot)context.Configuration)
             .ConfigureFunctionsApplicationInsights()
             .AddOptions()
             .Configure<ApplicationConfiguration>(context.Configuration.GetSection(nameof(ApplicationConfiguration)))

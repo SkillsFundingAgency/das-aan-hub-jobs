@@ -1,5 +1,5 @@
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using SFA.DAS.AAN.Hub.Jobs.Services;
@@ -23,7 +23,7 @@ namespace SFA.DAS.AAN.Hub.Jobs.Functions
 
             var count = await _notificationService.ProcessEventNotifications(cancellationToken);
 
-            _logger.LogInformation("Processed {count} Event Notifications", count);
+            _logger.LogInformation("Processed {Count} Event Notifications", count);
         }
     }
 }

@@ -8,6 +8,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=SkillsFundingAgency_das-aan-hub-jobs&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=SkillsFundingAgency_das-aan-hub-jobs)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg?longCache=true&style=flat-square)](https://en.wikipedia.org/wiki/MIT_License)
 
+## About
 This azure functions solution is part of Apprentice Ambassador Network (AAN) project. Here we have background jobs in form of Azure functions that carry out periodical jobs like sending out notifications or cleaning up data.
 
 ## How It Works
@@ -19,13 +20,15 @@ The notification job uses NServiceBus protocol to send a message per notificatio
 ### Pre-Requisites
 * A clone of this repository
 * Storage emulator like Azurite for local config source
+* Visual studio or similar IDE
+* Azure Function Core Tools for running and debugging functions locally
 * An Azure Service Bus instance with a Topic called `bundle-1` (optional, only required when working on notification function)
 
 ### Config
 
 You can find the latest config file in [das-employer-config repository](https://github.com/SkillsFundingAgency/das-employer-config/blob/master/das-aan-hub-jobs/SFA.DAS.AANHub.Jobs.json). 
 
-In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add local.settings.json file with following content:
+In the `SFA.DAS.AAN.Hub.Jobs` project, if not exist already, add `local.settings.json` file with following content:
 ```
 {
   "IsEncrypted": false,
@@ -57,7 +60,7 @@ When actively developing a function, it may be a good idea to disable other func
 * SFA.DAS.Configuration.AzureTableStorage
 
 ## Technologies
-* .Net 8.0
+* .Net 10.0
 * Azure Functions V4
 * Azure Table Storage
 * NServiceBus
